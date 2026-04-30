@@ -1,0 +1,404 @@
+DeepLearningLLMModel:
+    declarations*=Declaration
+;
+ 
+SplitType:
+    'train' | 'validation' | 'eval' | 'test'
+;
+ 
+FeatureType:
+    'float' | 'int' | 'string' | 'bool' | 'image' | 'text' | 'embedding' | 'categorical' | 'sequence'
+;
+ 
+RequiredFieldConstraint:
+    'required_field:' field=ID
+;
+ 
+ValueRangeConstraint:
+    'value_range:' field=ID 'in' '[' min=NUMBER ',' max=NUMBER ']'
+;
+ 
+NotNullConstraint:
+    'not_null:' field=ID
+;
+ 
+DatasetConstraint:
+    RequiredFieldConstraint | ValueRangeConstraint | NotNullConstraint
+;
+ 
+SplitDecl:
+    name=SplitType ':' ratio=FLOAT
+;
+ 
+FeatureDecl:
+    'Feature' name=ID '{'
+        (
+            ('type:' ftype=FeatureType)
+            ('shape:' '[' shape+=INT[','] ']')?
+            ('required:' required=BOOL)?
+            ('range:' '[' min=NUMBER ',' max=NUMBER ']')?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+DatasetDecl:
+    'Dataset' name=ID '{'
+        (
+            ('source:' source=STRING)
+            ('splits:' '[' splits+=SplitDecl[','] ']')?
+            ('features:' '[' features+=[FeatureDecl][','] ']')?
+            ('labels:' '[' labels+=STRING[','] ']')?
+            ('constraints:' '[' constraints+=DatasetConstraint[','] ']')?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+DatasetVersionDecl:
+    'DatasetVersion' name=ID '{'
+        (
+            ('dataset:' dataset=[DatasetDecl])
+            ('version:' version=STRING)
+            ('snapshot:' snapshot=STRING)?
+            ('timestamp:' timestamp=STRING)?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+LayerType:
+    'dense' | 'lstm' | 'gru' | 'cnn' | 'transformer' | 'embedding' | 'attention' | 'normalization' | 'pooling' | 'dropout' | 'linear' | 'conv2d' | 'flatten' | 'custom'
+;
+ 
+ActivationType:
+    'relu' | 'sigmoid' | 'tanh' | 'softmax' | 'gelu' | 'silu' | 'leaky_relu' | 'none'
+;
+ 
+KeyValueParam:
+    key=ID ':' value=STRING
+;
+ 
+LayerDecl:
+    'Layer' '{'
+        (
+            ('name:' name=ID)
+            ('type:' ltype=LayerType)
+            ('units:' units=INT)?
+            ('activation:' activation=ActivationType)?
+            ('dropout:' dropout=FLOAT)?
+            ('heads:' heads=INT)?
+            ('kernel_size:' kernel_size=INT)?
+            ('filters:' filters=INT)?
+            ('input_dim:' input_dim=INT)?
+            ('output_dim:' output_dim=INT)?
+            ('params:' '{' params+=KeyValueParam[','] '}')?
+        )#
+    '}'
+;
+ 
+SharedParamDecl:
+    'SharedParam' '{'
+        (
+            ('name:' name=ID)
+            ('type:' ptype=STRING)
+            ('value:' value=STRING)?
+            ('shared_with:' '[' shared_with+=ID[','] ']')?
+        )#
+    '}'
+;
+ 
+AttentionType:
+    'self' | 'cross' | 'multi_head' | 'scaled_dot_product' | 'sparse' | 'linear' | 'custom'
+;
+ 
+AttentionDecl:
+    'Attention' name=ID '{'
+        (
+            ('type:' atype=AttentionType)
+            ('heads:' heads=INT)?
+            ('dim:' dim=INT)?
+            ('dropout:' dropout=FLOAT)?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+ModelBlockDecl:
+    'ModelBlock' name=ID '{'
+        (
+            ('layers:' '[' layers+=LayerDecl[','] ']')?
+            ('shared_params:' '[' shared_params+=SharedParamDecl[','] ']')?
+            ('attention:' '[' attention+=[AttentionDecl][','] ']')?
+            ('sub_blocks:' '[' sub_blocks+=[ModelBlockDecl][','] ']')?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+HeadType:
+    'classification' | 'regression' | 'generation' | 'sequence_labeling' | 'span_extraction' | 'custom'
+;
+ 
+ModelHeadDecl:
+    'Head' '{'
+        (
+            ('type:' htype=HeadType)
+            ('output_dim:' output_dim=INT)?
+            ('activation:' activation=ActivationType)?
+            ('replace:' replace=BOOL)?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+ModelDecl:
+    'Model' name=ID '{'
+        (
+            ('blocks:' '[' blocks+=[ModelBlockDecl][','] ']')?
+            ('layers:' '[' layers+=LayerDecl[','] ']')?
+            ('attention:' '[' attention+=[AttentionDecl][','] ']')?
+            ('shared_params:' '[' shared_params+=SharedParamDecl[','] ']')?
+            ('pretrained_from:' pretrained_from=STRING)?
+            ('head:' head=ModelHeadDecl)?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+LossType:
+    'cross_entropy' | 'mse' | 'mae' | 'binary_cross_entropy' | 'kl_divergence' | 'contrastive' | 'triplet' | 'custom'
+;
+ 
+ObjectiveDecl:
+    'Objective' '{'
+        (
+            ('loss:' loss=LossType)
+            ('metrics:' '[' metrics+=STRING[','] ']')?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+OptimizerType:
+    'adamw' | 'adam' | 'sgd' | 'rmsprop' | 'adagrad' | 'lamb' | 'custom'
+;
+ 
+SchedulerType:
+    'cosine' | 'linear' | 'step' | 'exponential' | 'warmup_cosine' | 'constant' | 'none'
+;
+ 
+OptimizerDecl:
+    'Optimizer' '{'
+        (
+            ('type:' otype=OptimizerType)
+            ('learning_rate:' learning_rate=FLOAT)?
+            ('weight_decay:' weight_decay=FLOAT)?
+            ('momentum:' momentum=FLOAT)?
+            ('scheduler:' scheduler=SchedulerType)?
+            ('params:' '{' params+=KeyValueParam[','] '}')?
+        )#
+    '}'
+;
+ 
+DurationDecl:
+    'Duration' '{'
+        (
+            ('epochs:' epochs=INT)?
+            ('steps:' steps=INT)?
+            ('max_time:' max_time=STRING)?
+            ('early_stopping:' early_stopping=BOOL)?
+            ('patience:' patience=INT)?
+        )#
+    '}'
+;
+ 
+ComparisonOperator:
+    '>=' | '>' | '<=' | '<' | '==' | '!='
+;
+ 
+ComparisonOperatorValue:
+    ComparisonOperator | STRING
+;
+ 
+TrendType:
+    'increasing' | 'decreasing' | 'stable' | 'any'
+;
+ 
+MetricThresholdDecl:
+    'MetricThreshold' '{'
+        (
+            ('metric:' metric=STRING)
+            ('operator:' operator=ComparisonOperatorValue)
+            ('threshold:' threshold=FLOAT)
+            ('trend:' trend=TrendType)?
+        )#
+    '}'
+;
+ 
+EvaluationDecl:
+    'Evaluation' '{'
+        (
+            ('metrics:' '[' metrics+=MetricThresholdDecl[','] ']')?
+            ('dataset:' dataset=[DatasetDecl])?
+            ('dataset_version:' dataset_version=[DatasetVersionDecl])?
+            ('frequency:' frequency=STRING)?
+        )#
+    '}'
+;
+ 
+FreezeAction:
+    'freeze' | 'unfreeze' | 'partial_freeze'
+;
+ 
+FreezeRuleDecl:
+    'FreezeRule' '{'
+        (
+            ('target:' target=ID)
+            ('action:' action=FreezeAction)
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+TrainingStageDecl:
+    'Stage' '{'
+        (
+            ('name:' name=ID)
+            ('model:' model=[ModelDecl])
+            ('dataset:' dataset=[DatasetDecl])?
+            ('dataset_version:' dataset_version=[DatasetVersionDecl])?
+            ('depends_on:' '[' depends_on+=ID[','] ']')?
+            ('objective:' objective=ObjectiveDecl)?
+            ('optimizer:' optimizer=OptimizerDecl)?
+            ('duration:' duration=DurationDecl)?
+            ('evaluation:' evaluation=EvaluationDecl)?
+            ('freeze_rules:' '[' freeze_rules+=FreezeRuleDecl[','] ']')?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+TrainingPipelineDecl:
+    'TrainingPipeline' name=ID '{'
+        (
+            ('stages:' '[' stages+=TrainingStageDecl[','] ']')
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+FineTuningStrategy:
+    'full' | 'lora' | 'prefix_tuning' | 'adapter' | 'prompt_tuning' | 'qlora' | 'head_only' | 'custom'
+;
+ 
+FineTuningDecl:
+    'FineTuning' name=ID '{'
+        (
+            ('base_model:' base_model=[ModelDecl])
+            ('pretrained_from:' pretrained_from=STRING)?
+            ('strategy:' strategy=FineTuningStrategy)
+            ('freeze_rules:' '[' freeze_rules+=FreezeRuleDecl[','] ']')?
+            ('head_replacement:' head_replacement=ModelHeadDecl)?
+            ('dataset:' dataset=[DatasetDecl])?
+            ('dataset_version:' dataset_version=[DatasetVersionDecl])?
+            ('optimizer:' optimizer=OptimizerDecl)?
+            ('duration:' duration=DurationDecl)?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+DataUnit:
+    'samples' | 'batches' | 'files' | 'gb' | 'mb' | 'percent'
+;
+ 
+DriftDetectionMethod:
+    'ks_test' | 'psi' | 'chi_square' | 'wasserstein' | 'mmd' | 'custom'
+;
+ 
+NewDataTrigger:
+    'NewDataTrigger' '{'
+        (
+            ('dataset:' dataset=[DatasetDecl])
+            ('threshold:' threshold=INT)?
+            ('unit:' unit=DataUnit)?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+MetricDegradationTrigger:
+    'MetricDegradationTrigger' '{'
+        (
+            ('metric:' metric=STRING)
+            ('operator:' operator=ComparisonOperatorValue)
+            ('threshold:' threshold=FLOAT)
+            ('window:' window=STRING)?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+DataDriftTrigger:
+    'DataDriftTrigger' '{'
+        (
+            ('dataset:' dataset=[DatasetDecl])
+            ('method:' method=DriftDetectionMethod)
+            ('sensitivity:' sensitivity=FLOAT)?
+            ('features:' '[' features+=ID[','] ']')?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+ScheduledTrigger:
+    'ScheduledTrigger' '{'
+        (
+            ('cron:' cron=STRING)?
+            ('interval:' interval=STRING)?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+RetrainingTrigger:
+    NewDataTrigger | MetricDegradationTrigger | DataDriftTrigger | ScheduledTrigger
+;
+ 
+RetrainingPolicyDecl:
+    'RetrainingPolicy' name=ID '{'
+        (
+            ('model:' model=[ModelDecl])
+            ('pipeline:' pipeline=[TrainingPipelineDecl])?
+            ('triggers:' '[' triggers+=RetrainingTrigger[','] ']')
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+MetricDecl:
+    'Metric' name=ID '{'
+        (
+            ('formula:' formula=STRING)?
+            ('range:' '[' min=NUMBER ',' max=NUMBER ']')?
+            ('higher_is_better:' higher_is_better=BOOL)?
+            ('description:' description=STRING)?
+        )#
+    '}'
+;
+ 
+Declaration:
+    DatasetDecl
+    | DatasetVersionDecl
+    | FeatureDecl
+    | ModelBlockDecl
+    | AttentionDecl
+    | ModelDecl
+    | TrainingPipelineDecl
+    | FineTuningDecl
+    | RetrainingPolicyDecl
+    | MetricDecl
+;
+ 
+Comment: /\/\/.*?$/ | /\/\*(.|\n)*?\*\//;

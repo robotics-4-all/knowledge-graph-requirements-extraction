@@ -1,0 +1,1167 @@
+NPLMCPModel:
+   imports*=Import
+   (metadata=Metadata)?
+   (
+       (dataSources*=DataSource)
+       (tokenizers*=Tokenizer)
+       (preprocessors*=Preprocessor)
+       (featureExtractors*=FeatureExtractor)
+       (embeddingModels*=EmbeddingModel)
+       (nerTasks*=NERTask)
+       (classificationTasks*=ClassificationTask)
+       (trainingConfigs*=TrainingConfig)
+       (pipelines*=Pipeline)
+       (inferenceModes*=InferenceMode)
+       (evaluationProtocols*=EvaluationProtocol)
+       (languageProcessors*=LanguageProcessor)
+       (dataTransformations*=DataTransformation)
+       (deploymentConfigs*=DeploymentConfig)
+       (annotationSchemas*=AnnotationSchema)
+   )#
+;
+ 
+Import:
+   'import' importURI=STRING ('as' alias=ID)?
+;
+ 
+Metadata:
+   'Metadata' name=ID
+   (
+       ('name:' title=STRING)
+       ('version:' version=STRING)
+       ('author:' author=STRING)?
+       ('description:' description=STRING)?
+       ('language:' language=STRING)?
+   )#
+   'end'
+;
+ 
+FileFormat:
+   'txt' | 'csv' | 'jsonl' | 'json' | 'xml' | 'parquet' | 'tsv' | 'html' | 'pdf' | 'docx'
+;
+ 
+StreamProtocol:
+   'kafka' | 'mqtt' | 'amqp' | 'websocket' | 'http' | 'grpc'
+;
+ 
+DatabaseType:
+   'postgresql' | 'mysql' | 'mongodb' | 'elasticsearch' | 'sqlite' | 'redis' | 'cassandra'
+;
+ 
+FeedType:
+   'rss' | 'atom' | 'twitter' | 'webhook' | 'socket'
+;
+ 
+AuthType:
+   'basic' | 'token' | 'oauth' | 'apikey' | 'cert'
+;
+ 
+AuthConfig:
+   'Auth' '{'
+   (
+       ('type:' authType=AuthType)
+       ('credentials:' credentials=STRING)?
+       ('token:' token=STRING)?
+       ('keyPath:' keyPath=STRING)?
+   )#
+   '}'
+;
+ 
+FileDataSource:
+   'DataSource<File>' name=ID
+   (
+       ('path:' path=STRING)
+       ('encoding:' encoding=STRING)?
+       ('format:' format=FileFormat)
+       ('language:' language=STRING)?
+       ('languageDetection:' languageDetection=BOOL)?
+       ('batchSize:' batchSize=INT)?
+       ('recursive:' recursive=BOOL)?
+       ('filePattern:' filePattern=STRING)?
+   )#
+   'end'
+;
+ 
+StreamDataSource:
+   'DataSource<Stream>' name=ID
+   (
+       ('endpoint:' endpoint=STRING)
+       ('protocol:' protocol=StreamProtocol)
+       ('encoding:' encoding=STRING)?
+       ('language:' language=STRING)?
+       ('languageDetection:' languageDetection=BOOL)?
+       ('bufferSize:' bufferSize=INT)?
+       ('timeout:' timeout=INT)?
+       ('auth:' auth=AuthConfig)?
+   )#
+   'end'
+;
+ 
+DatabaseDataSource:
+   'DataSource<Database>' name=ID
+   (
+       ('connectionString:' connectionString=STRING)
+       ('dbType:' dbType=DatabaseType)
+       ('query:' query=STRING)?
+       ('table:' table=STRING)?
+       ('encoding:' encoding=STRING)?
+       ('language:' language=STRING)?
+       ('languageDetection:' languageDetection=BOOL)?
+       ('batchSize:' batchSize=INT)?
+       ('auth:' auth=AuthConfig)?
+   )#
+   'end'
+;
+ 
+RealTimeFeedDataSource:
+   'DataSource<RealTimeFeed>' name=ID
+   (
+       ('feedUrl:' feedUrl=STRING)
+       ('feedType:' feedType=FeedType)
+       ('encoding:' encoding=STRING)?
+       ('language:' language=STRING)?
+       ('languageDetection:' languageDetection=BOOL)?
+       ('pollInterval:' pollInterval=INT)?
+       ('auth:' auth=AuthConfig)?
+   )#
+   'end'
+;
+ 
+DataSource:
+   FileDataSource
+   | StreamDataSource
+   | DatabaseDataSource
+   | RealTimeFeedDataSource
+;
+ 
+SubwordAlgorithm:
+   'bpe' | 'wordpiece' | 'unigram'
+;
+ 
+SentencePieceModelType:
+   'unigram' | 'bpe' | 'word' | 'char'
+;
+ 
+TokenizationRule:
+   'Rule' '{' 'pattern:' pattern=STRING 'replacement:' replacement=STRING ('priority:' priority=INT)? '}'
+;
+ 
+SubwordTokenizer:
+   'Tokenizer<Subword>' name=ID
+   (
+       ('algorithm:' algorithm=SubwordAlgorithm)
+       ('vocabSize:' vocabSize=INT)?
+       ('minFreq:' minFreq=INT)?
+       ('maxTokenLength:' maxTokenLength=INT)?
+       ('specialTokens:' '[' specialTokens+=STRING[','] ']')?
+       ('vocabFile:' vocabFile=STRING)?
+       ('lowercase:' lowercase=BOOL)?
+       ('addPrefixSpace:' addPrefixSpace=BOOL)?
+   )#
+   'end'
+;
+ 
+SentencePieceTokenizer:
+   'Tokenizer<SentencePiece>' name=ID
+   (
+       ('modelFile:' modelFile=STRING)?
+       ('vocabSize:' vocabSize=INT)?
+       ('modelType:' modelType=SentencePieceModelType)?
+       ('characterCoverage:' characterCoverage=FLOAT)?
+       ('specialTokens:' '[' specialTokens+=STRING[','] ']')?
+       ('addBos:' addBos=BOOL)?
+       ('addEos:' addEos=BOOL)?
+   )#
+   'end'
+;
+ 
+WordTokenizer:
+   'Tokenizer<Word>' name=ID
+   (
+       ('separator:' separator=STRING)?
+       ('vocabFile:' vocabFile=STRING)?
+       ('vocabSize:' vocabSize=INT)?
+       ('lowercase:' lowercase=BOOL)?
+       ('stripAccents:' stripAccents=BOOL)?
+       ('unknownToken:' unknownToken=STRING)?
+       ('specialTokens:' '[' specialTokens+=STRING[','] ']')?
+   )#
+   'end'
+;
+ 
+CustomTokenizer:
+   'Tokenizer<Custom>' name=ID
+   (
+       ('pattern:' pattern=STRING)?
+       ('scriptPath:' scriptPath=STRING)?
+       ('vocabFile:' vocabFile=STRING)?
+       ('vocabSize:' vocabSize=INT)?
+       ('rules:' '-' rules+=TokenizationRule['-'])?
+       ('specialTokens:' '[' specialTokens+=STRING[','] ']')?
+   )#
+   'end'
+;
+ 
+Tokenizer:
+   SubwordTokenizer
+   | SentencePieceTokenizer
+   | WordTokenizer
+   | CustomTokenizer
+;
+ 
+UnicodeForm:
+   'NFC' | 'NFD' | 'NFKC' | 'NFKD'
+;
+ 
+StemmingAlgorithm:
+   'porter' | 'snowball' | 'lancaster' | 'arlstem'
+;
+ 
+LemmatizationBackend:
+   'wordnet' | 'spacy' | 'stanza' | 'treetagger' | 'custom'
+;
+ 
+CaseMode:
+   'lower' | 'upper' | 'title' | 'preserve'
+;
+ 
+ErrorHandlingStrategy:
+   'skip' | 'raise' | 'log' | 'default'
+;
+ 
+KeyValueParam:
+   key=ID ':' value=STRING
+;
+ 
+ConditionalExecution:
+   'Conditional' '{'
+   (
+       ('condition:' condition=STRING)
+       ('ifTrue:' ifTrue=STRING)?
+       ('ifFalse:' ifFalse=STRING)?
+   )#
+   '}'
+;
+ 
+NormalizationStep:
+   'Step<Normalize>' '{'
+   (
+       ('unicodeForm:' unicodeForm=UnicodeForm)?
+       ('stripDiacritics:' stripDiacritics=BOOL)?
+       ('normalizeWhitespace:' normalizeWhitespace=BOOL)?
+       ('normalizeNumbers:' normalizeNumbers=BOOL)?
+       ('normalizePunctuation:' normalizePunctuation=BOOL)?
+   )#
+   '}'
+;
+ 
+CleaningStep:
+   'Step<Clean>' '{'
+   (
+       ('removeHtml:' removeHtml=BOOL)?
+       ('removeUrls:' removeUrls=BOOL)?
+       ('removeEmails:' removeEmails=BOOL)?
+       ('removeMentions:' removeMentions=BOOL)?
+       ('removeHashtags:' removeHashtags=BOOL)?
+       ('removeSpecialChars:' removeSpecialChars=BOOL)?
+       ('removeNumbers:' removeNumbers=BOOL)?
+       ('customPatterns:' '[' customPatterns+=STRING[','] ']')?
+   )#
+   '}'
+;
+ 
+StopwordStep:
+   'Step<Stopword>' '{'
+   (
+       ('language:' language=STRING)?
+       ('customStopwords:' '[' customStopwords+=STRING[','] ']')?
+       ('stopwordFile:' stopwordFile=STRING)?
+       ('minDocFreq:' minDocFreq=FLOAT)?
+       ('maxDocFreq:' maxDocFreq=FLOAT)?
+   )#
+   '}'
+;
+ 
+StemmingStep:
+   'Step<Stem>' '{'
+   (
+       ('algorithm:' algorithm=StemmingAlgorithm)
+       ('language:' language=STRING)?
+   )#
+   '}'
+;
+ 
+LemmatizationStep:
+   'Step<Lemmatize>' '{'
+   (
+       ('backend:' backend=LemmatizationBackend)
+       ('language:' language=STRING)?
+       ('posTagging:' posTagging=BOOL)?
+   )#
+   '}'
+;
+ 
+CaseHandlingStep:
+   'Step<CaseHandling>' '{'
+   (
+       ('mode:' mode=CaseMode)
+       ('locale:' locale=STRING)?
+   )#
+   '}'
+;
+ 
+CustomStep:
+   'Step<Custom>' '{'
+   (
+       ('scriptPath:' scriptPath=STRING)
+       ('functionName:' functionName=STRING)?
+       ('params:' '-' params+=KeyValueParam['-'])?
+   )#
+   '}'
+;
+ 
+PreprocessingStep:
+   NormalizationStep
+   | CleaningStep
+   | StopwordStep
+   | StemmingStep
+   | LemmatizationStep
+   | CaseHandlingStep
+   | CustomStep
+;
+ 
+Preprocessor:
+   'Preprocessor' name=ID
+   (
+       ('steps:' '-' steps+=PreprocessingStep['-'])
+       ('language:' language=STRING)?
+       ('conditional:' conditional=ConditionalExecution)?
+       ('errorHandling:' errorHandling=ErrorHandlingStrategy)?
+   )#
+   'end'
+;
+ 
+NormType:
+   'l1' | 'l2' | 'none'
+;
+ 
+AnalyzerType:
+   'word' | 'char' | 'char_wb'
+;
+ 
+PoolingStrategy:
+   'mean' | 'max' | 'cls' | 'sum'
+;
+ 
+NGramRange:
+   '(' minN=INT ',' maxN=INT ')'
+;
+ 
+PositionalEncodingType:
+   'sinusoidal' | 'learned' | 'rotary' | 'alibi'
+;
+ 
+PretrainedEmbedding:
+   'EmbeddingModel<Pretrained>' name=ID
+   (
+       ('modelName:' modelName=STRING)
+       ('modelPath:' modelPath=STRING)?
+       ('dimension:' dimension=INT)?
+       ('vocabulary:' vocabulary=STRING)?
+       ('fineTune:' fineTune=BOOL)?
+       ('fineTuneLayers:' fineTuneLayers=INT)?
+       ('freeze:' freeze=BOOL)?
+       ('normalize:' normalize=BOOL)?
+   )#
+   'end'
+;
+ 
+ContextualEmbedding:
+   'EmbeddingModel<Contextual>' name=ID
+   (
+       ('modelName:' modelName=STRING)
+       ('modelPath:' modelPath=STRING)?
+       ('dimension:' dimension=INT)?
+       ('layers:' '[' layers+=INT[','] ']')?
+       ('pooling:' pooling=PoolingStrategy)?
+       ('fineTune:' fineTune=BOOL)?
+       ('fineTuneLayers:' fineTuneLayers=INT)?
+       ('maxLength:' maxLength=INT)?
+       ('cacheDir:' cacheDir=STRING)?
+   )#
+   'end'
+;
+ 
+PositionalEmbedding:
+   'EmbeddingModel<Positional>' name=ID
+   (
+       ('maxPosition:' maxPosition=INT)
+       ('dimension:' dimension=INT)
+       ('encodingType:' encodingType=PositionalEncodingType)?
+       ('dropout:' dropout=FLOAT)?
+       ('learnable:' learnable=BOOL)?
+   )#
+   'end'
+;
+ 
+CustomEmbeddingLayer:
+   'EmbeddingModel<Custom>' name=ID
+   (
+       ('dimension:' dimension=INT)
+       ('vocabSize:' vocabSize=INT)?
+       ('scriptPath:' scriptPath=STRING)?
+       ('configPath:' configPath=STRING)?
+       ('fineTune:' fineTune=BOOL)?
+       ('freeze:' freeze=BOOL)?
+       ('params:' '-' params+=KeyValueParam['-'])?
+   )#
+   'end'
+;
+ 
+EmbeddingModel:
+   PretrainedEmbedding
+   | ContextualEmbedding
+   | PositionalEmbedding
+   | CustomEmbeddingLayer
+;
+ 
+BagOfWordsExtractor:
+   'FeatureExtractor<BoW>' name=ID
+   (
+       ('vocabSize:' vocabSize=INT)?
+       ('minFreq:' minFreq=INT)?
+       ('maxFreq:' maxFreq=FLOAT)?
+       ('binary:' binary=BOOL)?
+       ('sparse:' sparse=BOOL)?
+       ('tokenizer:' tokenizer=[Tokenizer])?
+       ('preprocessor:' preprocessor=[Preprocessor])?
+   )#
+   'end'
+;
+ 
+TFIDFExtractor:
+   'FeatureExtractor<TFIDF>' name=ID
+   (
+       ('vocabSize:' vocabSize=INT)?
+       ('minDf:' minDf=FLOAT)?
+       ('maxDf:' maxDf=FLOAT)?
+       ('sublinearTf:' sublinearTf=BOOL)?
+       ('smooth:' smooth=BOOL)?
+       ('norm:' norm=NormType)?
+       ('sparse:' sparse=BOOL)?
+       ('ngramRange:' ngramRange=NGramRange)?
+       ('tokenizer:' tokenizer=[Tokenizer])?
+       ('preprocessor:' preprocessor=[Preprocessor])?
+   )#
+   'end'
+;
+ 
+NGramExtractor:
+   'FeatureExtractor<NGram>' name=ID
+   (
+       ('ngramRange:' ngramRange=NGramRange)
+       ('vocabSize:' vocabSize=INT)?
+       ('minFreq:' minFreq=INT)?
+       ('analyzer:' analyzer=AnalyzerType)?
+       ('sparse:' sparse=BOOL)?
+       ('tokenizer:' tokenizer=[Tokenizer])?
+       ('preprocessor:' preprocessor=[Preprocessor])?
+   )#
+   'end'
+;
+ 
+DenseEmbeddingExtractor:
+   'FeatureExtractor<DenseEmbedding>' name=ID
+   (
+       ('dimension:' dimension=INT)
+       ('pooling:' pooling=PoolingStrategy)?
+       ('normalize:' normalize=BOOL)?
+       ('embeddingModel:' embeddingModel=[EmbeddingModel])?
+       ('tokenizer:' tokenizer=[Tokenizer])?
+       ('preprocessor:' preprocessor=[Preprocessor])?
+   )#
+   'end'
+;
+ 
+FeatureExtractor:
+   BagOfWordsExtractor
+   | TFIDFExtractor
+   | NGramExtractor
+   | DenseEmbeddingExtractor
+;
+ 
+RecognitionBoundary:
+   'token' | 'sentence' | 'document' | 'span'
+;
+ 
+AgreementMetric:
+   'cohensKappa' | 'fleissKappa' | 'krippendorffAlpha' | 'iou' | 'f1'
+;
+ 
+LabelFormat:
+   'iob2' | 'iob' | 'iobes' | 'bilou' | 'spans' | 'jsonl' | 'json' | 'conll'
+;
+ 
+ReviewProcess:
+   'majority' | 'unanimous' | 'expert' | 'arbitration'
+;
+ 
+AdjudicationStrategy:
+   'majority' | 'expert' | 'merge' | 'reject'
+;
+ 
+TaxonomyNode:
+   'Label' '{'
+   (
+       ('name:' name=ID)
+       ('description:' description=STRING)?
+       ('parent:' parent=STRING)?
+       ('color:' color=STRING)?
+       ('examples:' '[' examples+=STRING[','] ']')?
+       ('aliases:' '[' aliases+=STRING[','] ']')?
+   )#
+   '}'
+;
+ 
+QualityProtocol:
+   'QualityProtocol' '{'
+   (
+       ('minAnnotators:' minAnnotators=INT)?
+       ('minAgreement:' minAgreement=FLOAT)?
+       ('reviewProcess:' reviewProcess=ReviewProcess)?
+       ('goldStandard:' goldStandard=STRING)?
+       ('adjudicationStrategy:' adjudicationStrategy=AdjudicationStrategy)?
+   )#
+   '}'
+;
+ 
+AnnotationSchema:
+   'AnnotationSchema' name=ID
+   (
+       ('taxonomy:' '-' taxonomy+=TaxonomyNode['-'])
+       ('guidelines:' guidelines=STRING)?
+       ('agreementMetric:' agreementMetric=AgreementMetric)?
+       ('qualityProtocol:' qualityProtocol=QualityProtocol)?
+       ('labelFormat:' labelFormat=LabelFormat)?
+       ('version:' version=STRING)?
+   )#
+   'end'
+;
+ 
+EntityTypeDefinition:
+   'EntityType' '{' 'name:' name=ID ('description:' description=STRING)? ('examples:' '[' examples+=STRING[','] ']')? '}'
+;
+ 
+CustomEntityCategory:
+   'Category' '{' 'name:' name=ID ('patterns:' '[' patterns+=STRING[','] ']')? ('parentType:' parentType=STRING)? '}'
+;
+ 
+NERTask:
+   'NERTask' name=ID
+   (
+       ('entityTypes:' '-' entityTypes+=EntityTypeDefinition['-'])
+       ('recognitionBoundary:' recognitionBoundary=RecognitionBoundary)?
+       ('confidenceThreshold:' confidenceThreshold=FLOAT)?
+       ('annotationSchema:' annotationSchema=[AnnotationSchema])?
+       ('embeddingModel:' embeddingModel=[EmbeddingModel])?
+       ('customCategories:' '-' customCategories+=CustomEntityCategory['-'])?
+       ('language:' language=STRING)?
+       ('nested:' nested=BOOL)?
+   )#
+   'end'
+;
+ 
+ClassBalancingStrategy:
+   'oversample' | 'undersample' | 'smote' | 'classWeight' | 'none'
+;
+ 
+ClassificationMetric:
+   'accuracy' | 'precision' | 'recall' | 'f1' | 'auc' | 'mcc' | 'kappa' | 'hamming'
+;
+ 
+ActivationFunction:
+   'softmax' | 'sigmoid' | 'relu' | 'tanh' | 'linear'
+;
+ 
+MultiClassTask:
+   'ClassificationTask<MultiClass>' name=ID
+   (
+       ('classes:' '[' classes+=STRING[','] ']')
+       ('balancing:' balancing=ClassBalancingStrategy)?
+       ('metrics:' '[' metrics+=ClassificationMetric[','] ']')?
+       ('embeddingModel:' embeddingModel=[EmbeddingModel])?
+       ('featureExtractor:' featureExtractor=[FeatureExtractor])?
+       ('threshold:' threshold=FLOAT)?
+       ('outputActivation:' outputActivation=ActivationFunction)?
+   )#
+   'end'
+;
+ 
+MultiLabelTask:
+   'ClassificationTask<MultiLabel>' name=ID
+   (
+       ('classes:' '[' classes+=STRING[','] ']')
+       ('balancing:' balancing=ClassBalancingStrategy)?
+       ('metrics:' '[' metrics+=ClassificationMetric[','] ']')?
+       ('embeddingModel:' embeddingModel=[EmbeddingModel])?
+       ('featureExtractor:' featureExtractor=[FeatureExtractor])?
+       ('threshold:' threshold=FLOAT)?
+       ('topK:' topK=INT)?
+       ('outputActivation:' outputActivation=ActivationFunction)?
+   )#
+   'end'
+;
+ 
+HierarchicalTask:
+   'ClassificationTask<Hierarchical>' name=ID
+   (
+       ('taxonomy:' taxonomy=[AnnotationSchema])
+       ('balancing:' balancing=ClassBalancingStrategy)?
+       ('metrics:' '[' metrics+=ClassificationMetric[','] ']')?
+       ('embeddingModel:' embeddingModel=[EmbeddingModel])?
+       ('featureExtractor:' featureExtractor=[FeatureExtractor])?
+       ('threshold:' threshold=FLOAT)?
+       ('levels:' levels=INT)?
+       ('propagateLabels:' propagateLabels=BOOL)?
+   )#
+   'end'
+;
+ 
+ClassificationTask:
+   MultiClassTask
+   | MultiLabelTask
+   | HierarchicalTask
+;
+ 
+OptimizerType:
+   'adam' | 'adamw' | 'sgd' | 'rmsprop' | 'adagrad' | 'adadelta' | 'lamb'
+;
+ 
+SchedulerType:
+   'linear' | 'cosine' | 'exponential' | 'step' | 'plateau' | 'warmupLinear' | 'warmupCosine'
+;
+ 
+ConvergenceMode:
+   'min' | 'max' | 'auto'
+;
+ 
+OptimizerConfig:
+   'Optimizer' '{'
+   (
+       ('type:' optimizerType=OptimizerType)
+       ('learningRate:' learningRate=FLOAT)?
+       ('weightDecay:' weightDecay=FLOAT)?
+       ('momentum:' momentum=FLOAT)?
+       ('beta1:' beta1=FLOAT)?
+       ('beta2:' beta2=FLOAT)?
+       ('epsilon:' epsilon=FLOAT)?
+       ('amsgrad:' amsgrad=BOOL)?
+   )#
+   '}'
+;
+ 
+RegularizationConfig:
+   'Regularization' '{'
+   (
+       ('dropout:' dropout=FLOAT)?
+       ('l1:' l1=FLOAT)?
+       ('l2:' l2=FLOAT)?
+       ('labelSmoothing:' labelSmoothing=FLOAT)?
+       ('weightDecay:' weightDecay=FLOAT)?
+   )#
+   '}'
+;
+ 
+ConvergenceCriteria:
+   'Convergence' '{'
+   (
+       ('patience:' patience=INT)?
+       ('minDelta:' minDelta=FLOAT)?
+       ('monitor:' monitor=STRING)?
+       ('mode:' mode=ConvergenceMode)?
+       ('baseline:' baseline=FLOAT)?
+   )#
+   '}'
+;
+ 
+LRSchedulerConfig:
+   'Scheduler' '{'
+   (
+       ('type:' schedulerType=SchedulerType)
+       ('warmupSteps:' warmupSteps=INT)?
+       ('decaySteps:' decaySteps=INT)?
+       ('decayRate:' decayRate=FLOAT)?
+       ('minLr:' minLr=FLOAT)?
+       ('stepSize:' stepSize=INT)?
+   )#
+   '}'
+;
+ 
+TrainingConfig:
+   'TrainingConfig' name=ID
+   (
+       ('batchSize:' batchSize=INT)
+       ('learningRate:' learningRate=FLOAT)
+       ('epochs:' epochs=INT)?
+       ('maxSteps:' maxSteps=INT)?
+       ('optimizer:' optimizer=OptimizerConfig)
+       ('regularization:' regularization=RegularizationConfig)?
+       ('convergence:' convergence=ConvergenceCriteria)?
+       ('scheduler:' scheduler=LRSchedulerConfig)?
+       ('gradientClipping:' gradientClipping=FLOAT)?
+       ('mixedPrecision:' mixedPrecision=BOOL)?
+       ('seed:' seed=INT)?
+       ('checkpointDir:' checkpointDir=STRING)?
+       ('saveEvery:' saveEvery=INT)?
+       ('warmupSteps:' warmupSteps=INT)?
+   )#
+   'end'
+;
+ 
+PipelineComponentType:
+   'dataSource' | 'tokenizer' | 'preprocessor' | 'featureExtractor' | 'embeddingModel'
+   | 'nerTask' | 'classificationTask' | 'trainingConfig' | 'inferenceMode' | 'custom'
+;
+ 
+DataFlowMode:
+   'batch' | 'stream' | 'micro_batch' | 'online'
+;
+ 
+ParallelStrategy:
+   'dataParallel' | 'modelParallel' | 'pipelineParallel' | 'none'
+;
+ 
+PipelineComponent:
+   'Component' '{'
+   (
+       ('name:' name=ID)
+       ('type:' componentType=PipelineComponentType)
+       ('ref:' ref=STRING)?
+       ('inputs:' '[' inputs+=STRING[','] ']')?
+       ('outputs:' '[' outputs+=STRING[','] ']')?
+       ('enabled:' enabled=BOOL)?
+       ('timeout:' timeout=INT)?
+   )#
+   '}'
+;
+ 
+DataFlowSpec:
+   'DataFlow' '{'
+   (
+       ('mode:' mode=DataFlowMode)
+       ('bufferSize:' bufferSize=INT)?
+       ('backpressure:' backpressure=BOOL)?
+       ('checkpointing:' checkpointing=BOOL)?
+   )#
+   '}'
+;
+ 
+ParallelismConfig:
+   'Parallelism' '{'
+   (
+       ('workers:' workers=INT)?
+       ('threads:' threads=INT)?
+       ('gpus:' gpus=INT)?
+       ('strategy:' strategy=ParallelStrategy)?
+   )#
+   '}'
+;
+ 
+PipelineErrorHandling:
+   'ErrorHandling' '{'
+   (
+       ('strategy:' strategy=ErrorHandlingStrategy)
+       ('retries:' retries=INT)?
+       ('retryDelay:' retryDelay=INT)?
+       ('fallback:' fallback=STRING)?
+       ('logErrors:' logErrors=BOOL)?
+   )#
+   '}'
+;
+ 
+PipelineDependency:
+   'Dependency' '{' 'from:' fromComponent=STRING 'to:' toComponent=STRING ('condition:' condition=STRING)? '}'
+;
+ 
+Pipeline:
+   'Pipeline' name=ID
+   (
+       ('components:' '-' components+=PipelineComponent['-'])
+       ('dataFlow:' dataFlow=DataFlowSpec)?
+       ('parallelism:' parallelism=ParallelismConfig)?
+       ('errorHandling:' errorHandling=PipelineErrorHandling)?
+       ('dependencies:' '-' dependencies+=PipelineDependency['-'])?
+       ('description:' description=STRING)?
+   )#
+   'end'
+;
+ 
+DataFormat:
+   'jsonl' | 'json' | 'csv' | 'text' | 'parquet' | 'avro' | 'protobuf' | 'xml'
+;
+ 
+BatchInference:
+   'InferenceMode<Batch>' name=ID
+   (
+       ('batchSize:' batchSize=INT)
+       ('inputFormat:' inputFormat=DataFormat)?
+       ('outputFormat:' outputFormat=DataFormat)?
+       ('confidenceScoring:' confidenceScoring=BOOL)?
+       ('confidenceThreshold:' confidenceThreshold=FLOAT)?
+       ('topK:' topK=INT)?
+       ('outputPath:' outputPath=STRING)?
+       ('workers:' workers=INT)?
+       ('pipeline:' pipeline=[Pipeline])?
+   )#
+   'end'
+;
+ 
+RealTimeInference:
+   'InferenceMode<RealTime>' name=ID
+   (
+       ('endpoint:' endpoint=STRING)?
+       ('inputFormat:' inputFormat=DataFormat)?
+       ('outputFormat:' outputFormat=DataFormat)?
+       ('confidenceScoring:' confidenceScoring=BOOL)?
+       ('confidenceThreshold:' confidenceThreshold=FLOAT)?
+       ('topK:' topK=INT)?
+       ('maxLatency:' maxLatency=INT)?
+       ('cacheResults:' cacheResults=BOOL)?
+       ('pipeline:' pipeline=[Pipeline])?
+   )#
+   'end'
+;
+ 
+StreamingInference:
+   'InferenceMode<Streaming>' name=ID
+   (
+       ('inputStream:' inputStream=STRING)
+       ('outputStream:' outputStream=STRING)?
+       ('inputFormat:' inputFormat=DataFormat)?
+       ('outputFormat:' outputFormat=DataFormat)?
+       ('confidenceScoring:' confidenceScoring=BOOL)?
+       ('confidenceThreshold:' confidenceThreshold=FLOAT)?
+       ('windowSize:' windowSize=INT)?
+       ('slideSize:' slideSize=INT)?
+       ('pipeline:' pipeline=[Pipeline])?
+   )#
+   'end'
+;
+ 
+InferenceMode:
+   BatchInference
+   | RealTimeInference
+   | StreamingInference
+;
+ 
+ValidationStrategy:
+   'kFold' | 'stratifiedKFold' | 'holdout' | 'leaveOneOut' | 'timeSeries' | 'bootstrap'
+;
+ 
+EvaluationMetric:
+   'accuracy' | 'precision' | 'recall' | 'f1' | 'auc' | 'bleu' | 'rouge' | 'meteor'
+   | 'perplexity' | 'ner_f1' | 'exact_match' | 'mcc' | 'spearman' | 'pearson'
+;
+ 
+SignificanceMethod:
+   'ttest' | 'wilcoxon' | 'mcnemar' | 'bootstrap' | 'permutation'
+;
+ 
+CorrectionMethod:
+   'bonferroni' | 'holm' | 'fdr' | 'none'
+;
+ 
+SignificanceTestConfig:
+   'SignificanceTest' '{'
+   (
+       ('method:' method=SignificanceMethod)
+       ('alpha:' alpha=FLOAT)?
+       ('correction:' correction=CorrectionMethod)?
+   )#
+   '}'
+;
+ 
+BenchmarkConfig:
+   'Benchmark' '{' 'name:' name=ID ('datasetPath:' datasetPath=STRING)? ('baselineScore:' baselineScore=FLOAT)? ('metric:' metric=EvaluationMetric)? '}'
+;
+ 
+EvaluationProtocol:
+   'EvaluationProtocol' name=ID
+   (
+       ('strategy:' strategy=ValidationStrategy)
+       ('metrics:' '[' metrics+=EvaluationMetric[','] ']')
+       ('significanceTesting:' significanceTesting=SignificanceTestConfig)?
+       ('benchmarks:' '-' benchmarks+=BenchmarkConfig['-'])?
+       ('folds:' folds=INT)?
+       ('testSplit:' testSplit=FLOAT)?
+       ('validationSplit:' validationSplit=FLOAT)?
+       ('stratified:' stratified=BOOL)?
+       ('seed:' seed=INT)?
+       ('reportPath:' reportPath=STRING)?
+   )#
+   'end'
+;
+ 
+MorphologicalBackend:
+   'spacy' | 'stanza' | 'treetagger' | 'morfessor' | 'custom'
+;
+ 
+MorphologicalFeature:
+   'pos' | 'lemma' | 'case' | 'number' | 'gender' | 'tense' | 'mood' | 'aspect'
+;
+ 
+LanguageDetectionBackend:
+   'langdetect' | 'fasttext' | 'langid' | 'cld3' | 'custom'
+;
+ 
+TextDirection:
+   'ltr' | 'rtl' | 'ttb'
+;
+ 
+MorphologicalConfig:
+   'Morphological' '{'
+   (
+       ('backend:' backend=MorphologicalBackend)
+       ('features:' '[' features+=MorphologicalFeature[','] ']')?
+       ('language:' language=STRING)?
+   )#
+   '}'
+;
+ 
+LanguageDetectionConfig:
+   'LanguageDetection' '{'
+   (
+       ('backend:' backend=LanguageDetectionBackend)
+       ('minConfidence:' minConfidence=FLOAT)?
+       ('supportedLanguages:' '[' supportedLanguages+=STRING[','] ']')?
+       ('fallbackLanguage:' fallbackLanguage=STRING)?
+   )#
+   '}'
+;
+ 
+ScriptHandlingConfig:
+   'ScriptHandling' '{'
+   (
+       ('script:' script=STRING)?
+       ('direction:' direction=TextDirection)?
+       ('normalization:' normalization=BOOL)?
+       ('transliterate:' transliterate=BOOL)?
+   )#
+   '}'
+;
+ 
+LocaleRule:
+   'Rule' '{' 'locale:' locale=STRING 'pattern:' pattern=STRING 'action:' action=STRING '}'
+;
+ 
+LanguageProcessor:
+   'LanguageProcessor' name=ID
+   (
+       ('language:' language=STRING)
+       ('locale:' locale=STRING)?
+       ('morphologicalAnalysis:' morphologicalAnalysis=MorphologicalConfig)?
+       ('languageDetection:' languageDetection=LanguageDetectionConfig)?
+       ('scriptHandling:' scriptHandling=ScriptHandlingConfig)?
+       ('localeRules:' '-' localeRules+=LocaleRule['-'])?
+   )#
+   'end'
+;
+ 
+AugmentationTechnique:
+   'synonym' | 'backtranslation' | 'insertion' | 'deletion' | 'swap' | 'noise' | 'paraphrase'
+;
+ 
+SyntheticDataMethod:
+   'template' | 'gpt' | 'rule' | 'variational' | 'custom'
+;
+ 
+AugmentationOperation:
+   'Operation<Augmentation>' '{'
+   (
+       ('techniques:' '[' techniques+=AugmentationTechnique[','] ']')
+       ('probability:' probability=FLOAT)?
+       ('maxAugments:' maxAugments=INT)?
+       ('language:' language=STRING)?
+   )#
+   '}'
+;
+ 
+SyntheticDataOperation:
+   'Operation<SyntheticData>' '{'
+   (
+       ('method:' method=SyntheticDataMethod)
+       ('count:' count=INT)?
+       ('templatePath:' templatePath=STRING)?
+       ('language:' language=STRING)?
+       ('params:' '-' params+=KeyValueParam['-'])?
+   )#
+   '}'
+;
+ 
+FormatConversionOperation:
+   'Operation<FormatConversion>' '{'
+   (
+       ('fromFormat:' fromFormat=DataFormat)
+       ('toFormat:' toFormat=DataFormat)
+       ('mapping:' mapping=STRING)?
+       ('schema:' schema=STRING)?
+   )#
+   '}'
+;
+ 
+CustomTransformOperation:
+   'Operation<Custom>' '{'
+   (
+       ('scriptPath:' scriptPath=STRING)
+       ('functionName:' functionName=STRING)?
+       ('params:' '-' params+=KeyValueParam['-'])?
+   )#
+   '}'
+;
+ 
+TransformationOperation:
+   AugmentationOperation
+   | SyntheticDataOperation
+   | FormatConversionOperation
+   | CustomTransformOperation
+;
+ 
+DataTransformation:
+   'DataTransformation' name=ID
+   (
+       ('operations:' '-' operations+=TransformationOperation['-'])
+       ('inputFormat:' inputFormat=DataFormat)?
+       ('outputFormat:' outputFormat=DataFormat)?
+       ('batchSize:' batchSize=INT)?
+       ('workers:' workers=INT)?
+       ('outputPath:' outputPath=STRING)?
+   )#
+   'end'
+;
+ 
+ServingProtocol:
+   'rest' | 'grpc' | 'websocket' | 'kafka' | 'mqtt'
+;
+ 
+ScalingStrategy:
+   'horizontal' | 'vertical' | 'auto' | 'none'
+;
+ 
+VersioningStrategy:
+   'semantic' | 'timestamp' | 'hash' | 'sequential'
+;
+ 
+CheckpointFormat:
+   'pytorch' | 'tensorflow' | 'onnx' | 'huggingface' | 'custom'
+;
+ 
+MonitoringMetric:
+   'latency' | 'throughput' | 'errorRate' | 'accuracy' | 'drift' | 'memory' | 'cpu'
+;
+ 
+LogLevel:
+   'debug' | 'info' | 'warning' | 'error' | 'critical'
+;
+ 
+ThresholdOperator:
+   'gt' | 'lt' | 'gte' | 'lte' | 'eq' | 'neq'
+;
+ 
+DeploymentEnvironment:
+   'cloud' | 'onpremise' | 'edge' | 'hybrid'
+;
+ 
+ServingEndpoint:
+   'Endpoint' '{'
+   (
+       ('name:' name=ID)
+       ('protocol:' protocol=ServingProtocol)
+       ('host:' host=STRING)?
+       ('port:' port=INT)?
+       ('path:' path=STRING)?
+       ('auth:' auth=AuthConfig)?
+       ('timeout:' timeout=INT)?
+       ('maxBatchSize:' maxBatchSize=INT)?
+   )#
+   '}'
+;
+ 
+ScalingPolicy:
+   'Scaling' '{'
+   (
+       ('minReplicas:' minReplicas=INT)?
+       ('maxReplicas:' maxReplicas=INT)?
+       ('targetCpu:' targetCpu=FLOAT)?
+       ('targetMemory:' targetMemory=FLOAT)?
+       ('scaleUpCooldown:' scaleUpCooldown=INT)?
+       ('scaleDownCooldown:' scaleDownCooldown=INT)?
+       ('strategy:' strategy=ScalingStrategy)?
+   )#
+   '}'
+;
+ 
+ModelVersioningConfig:
+   'Versioning' '{'
+   (
+       ('strategy:' strategy=VersioningStrategy)
+       ('maxVersions:' maxVersions=INT)?
+       ('registry:' registry=STRING)?
+       ('autoPromote:' autoPromote=BOOL)?
+       ('rollback:' rollback=BOOL)?
+   )#
+   '}'
+;
+ 
+CheckpointConfig:
+   'Checkpoint' '{'
+   (
+       ('dir:' dir=STRING)
+       ('saveEvery:' saveEvery=INT)?
+       ('maxCheckpoints:' maxCheckpoints=INT)?
+       ('saveOptimizer:' saveOptimizer=BOOL)?
+       ('format:' format=CheckpointFormat)?
+   )#
+   '}'
+;
+ 
+AlertThreshold:
+   'Alert' '{' 'metric:' metric=STRING 'threshold:' threshold=FLOAT 'operator:' operator=ThresholdOperator ('action:' action=STRING)? '}'
+;
+ 
+MonitoringConfig:
+   'Monitoring' '{'
+   (
+       ('metrics:' '[' metrics+=MonitoringMetric[','] ']')?
+       ('alertThresholds:' '-' alertThresholds+=AlertThreshold['-'])?
+       ('logLevel:' logLevel=LogLevel)?
+       ('dashboardUrl:' dashboardUrl=STRING)?
+       ('samplingRate:' samplingRate=FLOAT)?
+   )#
+   '}'
+;
+ 
+DeploymentConfig:
+   'DeploymentConfig' name=ID
+   (
+       ('endpoints:' '-' endpoints+=ServingEndpoint['-'])
+       ('scaling:' scaling=ScalingPolicy)?
+       ('versioning:' versioning=ModelVersioningConfig)?
+       ('checkpointing:' checkpointing=CheckpointConfig)?
+       ('monitoring:' monitoring=MonitoringConfig)?
+       ('pipeline:' pipeline=[Pipeline])?
+       ('environment:' environment=DeploymentEnvironment)?
+   )#
+   'end'
+;
+ 
+Comment:
+   CommentLine | CommentBlock
+;
+ 
+CommentLine:
+   /\/\/.*?$/
+;
+ 
+CommentBlock:
+   /\/\*(.|\n)*?\*\//
+;

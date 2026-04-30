@@ -1,0 +1,44 @@
+1. Text Data Definition
+The grammar should support: Defining text data sources, text fields, languages, encodings, and document boundaries as first-class concepts.
+ 
+2. Text Segmentation and Normalization
+The grammar should support: Declarative specification of text segmentation, normalization rules, and cleanup steps applied before analysis.
+ 
+3. Linguistic Unit Configuration
+The grammar should support: Expressing which linguistic units (such as tokens, sentences, phrases, or documents) are used at each stage of processing.
+ 
+4. Language Awareness and Multilingual Handling
+The grammar should support: Explicit declaration of language-specific behaviors and multilingual processing paths within a single pipeline.
+ 
+5. Linguistic Representation Selection
+The grammar should support: Specifying how text is represented linguistically (e.g., symbolic, contextual, or semantic representations) without exposing technical complexity.
+ 
+6. Embedding Abstraction
+The grammar should support: Configuring text embedding choices as abstract, human-readable options suitable for different tasks and languages.
+ 
+7. Task-Centric Workflow Definition
+The grammar should support: Defining end-to-end NLP workflows centered on user intended tasks rather than technical processing steps.
+ 
+8. Information Extraction Task Specification
+The grammar should support: Declarative definition of information extraction tasks, including entity detection, entity classification, and relationship identification.
+ 
+9. Annotation and Label Semantics
+The grammar should support: Defining label sets, annotation meanings, constraints, and relationships in a way that is understandable to non-experts.
+ 
+10. Training and Inference Mode Declaration
+The grammar should support: Clear differentiation between training, validation, and inference configurations over text pipelines.
+ 
+11. Pipeline Composition and Orchestration
+The grammar should support: Composing, ordering, reusing, and branching NLP pipeline stages as a single coherent specification.
+ 
+12. Real-Time and Batch Text Processing
+The grammar should support: Expressing whether text processing and inference occur in real-time, batch, or hybrid modes.
+ 
+13. Quality and Performance Signals
+The grammar should support: Defining observable quality signals and acceptance criteria related to text understanding and task outcomes.
+ 
+14. Language and Topic Drift Awareness
+The grammar should support: Expressing conditions under which changes in language usage, vocabulary, or topics are detected and acknowledged.
+ 
+15. Retraining and Adaptation Triggers
+The grammar should support: Declarative rules that describe when and why retraining or adaptation is required based on data changes, drift, or quality signals.

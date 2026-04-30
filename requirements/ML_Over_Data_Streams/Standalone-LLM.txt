@@ -1,0 +1,44 @@
+1. Stream Source Definition
+The grammar should support: Declaring continuous data sources as streams, including their identifiers, data arrival mode (continuous or bursty), and connection parameters required to read incoming events.
+ 
+2. Stream Schema and Data Types
+The grammar should support: Defining the structure of streaming data, including fields, data types, optional attributes, and default values, with validation of schema consistency across pipeline stages.
+ 
+3. Time Semantics Specification
+The grammar should support: Explicit declaration of time semantics for streams, including which field represents time, how time progresses, and whether processing is based on event time or processing time.
+ 
+4. Schema and Stream Evolution Handling
+The grammar should support: Expressing how changes in stream structure or field availability are handled over time, including allowed additions, removals, or type changes.
+ 
+5. Window Definition and Configuration
+The grammar should support: Defining finite views over infinite streams using windows, including size, advance behavior, and alignment with the declared time semantics.
+ 
+6. Out-of-Order and Late Data Handling
+The grammar should support: Expressing acceptable delays in data arrival and how late or out-of-order events are treated within windowed or stateful processing.
+ 
+7. Stateful Aggregation over Streams
+The grammar should support: Declaring stateful computations over streams, including grouped aggregations, maintained state scope, and rules for state update and expiration.
+ 
+8. Incremental Feature Construction
+The grammar should support: Defining features that are continuously updated as new events arrive, including transformations derived from raw stream fields and windowed or stateful values.
+ 
+9. Online Model Definition and Binding
+The grammar should support: Declaring models that learn continuously from streams, including input features, target fields, and update frequency tied to incoming data.
+ 
+10. Pipeline Composition and Orchestration
+The grammar should support: Composing end-to-end pipelines by declaratively linking data streams, feature definitions, models, evaluation logic, and outputs into a single coherent flow.
+ 
+11. Real-Time Inference Configuration
+The grammar should support: Expressing how incoming stream events are scored in real time, including which model is used, when predictions are emitted, and where results are sent.
+ 
+12. Continuous Evaluation Metrics
+The grammar should support: Defining evaluation metrics that are computed continuously over streaming predictions and outcomes, including their update scope and temporal aggregation.
+ 
+13. Data and Concept Drift Specification
+The grammar should support: Expressing conditions that indicate changes in data characteristics or prediction behavior over time, based on monitored stream statistics or evaluation signals.
+ 
+14. Retraining Triggers and Policies
+The grammar should support: Declaring retraining conditions driven by streaming criteria, such as accumulated data volume, sustained metric degradation, or persistent drift signals.
+ 
+15. Validation and Consistency Constraints
+The grammar should support: Validating that declared streams, windows, features, models, metrics, and retraining rules are compatible in terms of schema, time semantics, and data dependencies.

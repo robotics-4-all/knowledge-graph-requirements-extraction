@@ -1,0 +1,44 @@
+1. Dataset Definition and Loading
+The grammar should support: Declarative specification of dataset sources, input data formats, and data loading configurations including file paths, data types, and input dimensions without requiring knowledge of underlying data handling mechanisms.
+ 
+2. Data Preprocessing and Transformation Pipeline
+The grammar should support: Sequential definition of data preprocessing steps including normalization, feature extraction, and data augmentation operations that can be chained together in a pipeline format.
+ 
+3. Training and Validation Data Split Configuration
+The grammar should support: Specification of data partitioning strategies for training, validation, and test sets with configurable split ratios and sampling methods. 
+ 
+4. Neural Network Architecture Definition
+The grammar should support: Hierarchical definition of network architectures through layer specification, including layer types, connections, and architectural patterns without exposing implementation details. 
+ 
+5. Layer Parameter and Configuration Management
+The grammar should support: Declarative specification of layer parameters including dimensions, weights initialization, and layer-specific configurations in a human-readable format. 
+ 
+6. Activation Function Selection
+The grammar should support: Selection and configuration of activation functions for different layers with parameterizable options for commonly used activation types. 
+ 
+7. Loss Function and Optimization Configuration
+The grammar should support: Specification of loss functions and optimization strategies with configurable parameters for learning behavior without requiring optimization theory knowledge. 
+ 
+8. Learning Rate and Training Schedule Management
+The grammar should support: Definition of learning rate policies, scheduling strategies, and decay parameters that can be easily configured for different training phases. 
+ 
+9. Batch Processing and Training Configuration
+The grammar should support: Specification of batch sizes, training epochs, and batch processing strategies with clear parameter definitions for training workflow control. 
+ 
+10. Model Training and Fitting Process Definition
+The grammar should support: Declarative specification of the training process including training loops, checkpoint saving, and training monitoring without exposing training loop implementation. 
+ 
+11. Model Evaluation and Metrics Configuration
+The grammar should support: Definition of evaluation metrics, scoring methods, and prediction output configurations for model assessment and validation. 
+ 
+12. Transfer Learning and Pretrained Model Integration
+The grammar should support: Specification of pretrained model loading, layer freezing/unfreezing strategies, and model head replacement for transfer learning scenarios. 
+ 
+13. Convolutional and Recurrent Architecture Support
+The grammar should support: Specialized configuration for convolutional and recurrent network architectures including CNN layers, RNN variants, and LSTM configurations with domain-specific parameters.
+ 
+14. Model Output and Prediction Configuration
+The grammar should support: Specification of model output formats, prediction post-processing, and result interpretation configurations for different use cases. 
+ 
+15. Training Monitoring and Early Stopping Rules
+The grammar should support: Definition of training monitoring criteria, early stopping conditions, and validation-based training control rules that can trigger training modifications or termination.

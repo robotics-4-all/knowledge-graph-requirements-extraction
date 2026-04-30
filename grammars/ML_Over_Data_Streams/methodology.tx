@@ -1,0 +1,1102 @@
+MLOverDataStreamMCP:
+    imports*=Import
+    (
+        (streamSources*=StreamSource)
+        (schemas*=SchemaDefinition)
+        (windowSpecs*=WindowSpec)
+        (lateEventPolicies*=LateEventPolicy)
+        (featurePipelines*=FeaturePipeline)
+        (onlineLearners*=OnlineLearner)
+        (modelStates*=ModelState)
+        (inferenceSystems*=InferenceSystem)
+        (pipelines*=Pipeline)
+        (monitoringConfigs*=MonitoringConfig)
+        (driftDetectors*=DriftDetector)
+        (predictionEndpoints*=PredictionEndpoint)
+        (aggregationSpecs*=AggregationSpec)
+    )#
+;
+ 
+Import:
+    'import' importURI=STRING
+;
+ 
+StreamSourceType:
+    'MESSAGE_QUEUE' | 'DATABASE' | 'FILE_SYSTEM' | 'API' | 'KAFKA' | 'KINESIS' | 'PUBSUB' | 'MQTT' | 'AMQP' | 'WEBSOCKET'
+;
+ 
+StreamProtocol:
+    'WEBSOCKET' | 'HTTPS' | 'HTTP' | 'MQTT' | 'AMQP' | 'GRPC' | 'KAFKA' | 'AVRO' | 'TCP' | 'UDP'
+;
+ 
+KeyValueParam:
+    key=ID ':' value=STRING
+;
+ 
+ConnectionParams:
+    '{' params+=KeyValueParam[','] '}'
+;
+ 
+ErrorType:
+    'CONNECTION_ERROR' | 'TIMEOUT' | 'AUTH_ERROR' | 'SCHEMA_ERROR' | 'NETWORK_ERROR' | 'UNKNOWN'
+;
+ 
+ErrorAction:
+    'SKIP' | 'RETRY' | 'DEAD_LETTER' | 'FAIL' | 'LOG_AND_CONTINUE'
+;
+ 
+LogLevel:
+    'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL'
+;
+ 
+RetryPolicy:
+    '{'
+    (
+        ('maxRetries:' maxRetries=INT)
+        ('retryInterval:' retryInterval=NUMBER)
+        ('backoffMultiplier:' backoffMultiplier=NUMBER)?
+        ('maxBackoff:' maxBackoff=NUMBER)?
+        ('retryOn:' '[' retryOn+=ErrorType[','] ']')?
+    )#
+    '}'
+;
+ 
+ErrorHandlingStrategy:
+    '{'
+    (
+        ('onError:' onError=ErrorAction)
+        ('deadLetterQueue:' deadLetterQueue=STRING)?
+        ('maxErrors:' maxErrors=INT)?
+        ('errorLogLevel:' errorLogLevel=LogLevel)?
+    )#
+    '}'
+;
+ 
+PlainAuth:
+    'Plain' '{'
+    (
+        ('username:' username=STRING)
+        ('password:' password=STRING)
+    )#
+    '}'
+;
+ 
+ApiKeyAuth:
+    'ApiKey' '{'
+    ('key:' key=STRING)
+    '}'
+;
+ 
+CertAuth:
+    'Cert' '{'
+    (
+        ('certPath:' certPath=STRING)
+        ('keyPath:' keyPath=STRING)?
+        ('caPath:' caPath=STRING)?
+    )#
+    '}'
+;
+ 
+TokenAuth:
+    'Token' '{'
+    ('token:' token=STRING)
+    '}'
+;
+ 
+OAuthConfig:
+    'OAuth' '{'
+    (
+        ('clientId:' clientId=STRING)
+        ('clientSecret:' clientSecret=STRING)
+        ('tokenUrl:' tokenUrl=STRING)
+        ('scopes:' '[' scopes+=STRING[','] ']')?
+    )#
+    '}'
+;
+ 
+AuthConfig:
+    PlainAuth | ApiKeyAuth | CertAuth | TokenAuth | OAuthConfig
+;
+ 
+StreamSource:
+    'StreamSource' name=ID
+    (
+        ('type:' sourceType=StreamSourceType)
+        ('endpoint:' endpoint=STRING)
+        ('protocol:' protocol=StreamProtocol)?
+        ('auth:' auth=AuthConfig)?
+        ('retryPolicy:' retryPolicy=RetryPolicy)?
+        ('errorHandling:' errorHandling=ErrorHandlingStrategy)?
+        ('connectionParams:' connectionParams=ConnectionParams)?
+    )#
+    'end'
+;
+ 
+FieldType:
+    'INT' | 'FLOAT' | 'STRING' | 'BOOL' | 'TIMESTAMP' | 'DATE' | 'BYTES' | 'ARRAY' | 'MAP' | 'STRUCT' | 'DOUBLE' | 'LONG'
+;
+ 
+MinConstraint:
+    'min(' value=NUMBER ')'
+;
+ 
+MaxConstraint:
+    'max(' value=NUMBER ')'
+;
+ 
+PatternConstraint:
+    'pattern(' pattern=STRING ')'
+;
+ 
+EnumConstraint:
+    'enum(' '[' values+=STRING[','] ']' ')'
+;
+ 
+NotNullConstraint:
+    'notNull'
+;
+ 
+FieldConstraint:
+    MinConstraint | MaxConstraint | PatternConstraint | EnumConstraint | NotNullConstraint
+;
+ 
+SchemaEvolutionPolicy:
+    'ADD_NEW_FIELDS' | 'ALLOW_TYPE_WIDENING' | 'STRICT' | 'FULL_EVOLUTION' | 'CUSTOM' | 'BACKWARD' | 'FORWARD' | 'FULL'
+;
+ 
+CompatibilityRule:
+    'BACKWARD_TRANSITIVE' | 'FORWARD_TRANSITIVE' | 'BACKWARD' | 'FORWARD' | 'FULL' | 'NONE'
+;
+ 
+SchemaField:
+    name=ID ':' fieldType=FieldType
+    (
+        ('constraints:' '[' constraints+=FieldConstraint[','] ']')?
+        ('nullable:' nullable=BOOL)?
+        ('default:' defaultValue=STRING)?
+        ('description:' description=STRING)?
+    )#
+;
+ 
+SchemaDefinition:
+    'Schema' name=ID
+    (
+        ('fields:' '-' fields+=SchemaField['-'])
+        ('evolutionPolicy:' evolutionPolicy=SchemaEvolutionPolicy)?
+        ('compatibilityRule:' compatibilityRule=CompatibilityRule)?
+        ('version:' version=STRING)?
+    )#
+    'end'
+;
+ 
+TimeUnit:
+    'MILLISECONDS' | 'SECONDS' | 'MINUTES' | 'HOURS' | 'DAYS'
+;
+ 
+TimestampSemantics:
+    'EVENT_TIME' | 'PROCESSING_TIME' | 'INGESTION_TIME'
+;
+ 
+WatermarkStrategy:
+    'BOUNDED_OUT_OF_ORDERNESS' | 'MONOTONOUS' | 'FIXED_DELAY' | 'CUSTOM'
+;
+ 
+LateEventAction:
+    'DROP' | 'RECOMPUTE' | 'SIDE_OUTPUT' | 'UPDATE_RESULT'
+;
+ 
+WatermarkPolicy:
+    '{'
+    (
+        ('strategy:' strategy=WatermarkStrategy)
+        ('maxLagMs:' maxLagMs=NUMBER)?
+        ('timestampField:' timestampField=STRING)?
+        ('timestampFormat:' timestampFormat=STRING)?
+        ('lateEventAction:' lateEventAction=LateEventAction)?
+    )#
+    '}'
+;
+ 
+TriggerOperator:
+    'ANY' | 'ALL' | 'FIRST'
+;
+ 
+CustomTrigger:
+    'Trigger<Custom>' '{'
+    ('predicate:' predicate=STRING)
+    '}'
+;
+ 
+TimeTrigger:
+    'Trigger<Time>' '{'
+    (
+        ('interval:' interval=NUMBER)
+        ('unit:' unit=TimeUnit)
+    )#
+    '}'
+;
+ 
+CountTrigger:
+    'Trigger<Count>' '{'
+    ('count:' count=INT)
+    '}'
+;
+ 
+SimpleTriggerRef:
+    TimeTrigger | CountTrigger | CustomTrigger
+;
+ 
+CompositeTrigger:
+    'Trigger<Composite>' '{'
+    (
+        ('operator:' operator=TriggerOperator)
+        ('triggers:' '[' triggers+=SimpleTriggerRef[','] ']')
+    )#
+    '}'
+;
+ 
+WindowTrigger:
+    TimeTrigger | CountTrigger | CompositeTrigger | CustomTrigger
+;
+ 
+TumblingWindow:
+    'Window<Tumbling>' name=ID
+    (
+        ('size:' size=NUMBER)
+        ('sizeUnit:' sizeUnit=TimeUnit)
+        ('trigger:' trigger=WindowTrigger)?
+        ('allowedLateness:' allowedLateness=NUMBER)?
+        ('latenessUnit:' latenessUnit=TimeUnit)?
+        ('timestampSemantics:' timestampSemantics=TimestampSemantics)?
+        ('watermarkPolicy:' watermarkPolicy=WatermarkPolicy)?
+    )#
+    'end'
+;
+ 
+SlidingWindow:
+    'Window<Sliding>' name=ID
+    (
+        ('size:' size=NUMBER)
+        ('sizeUnit:' sizeUnit=TimeUnit)
+        ('slide:' slide=NUMBER)
+        ('slideUnit:' slideUnit=TimeUnit)
+        ('trigger:' trigger=WindowTrigger)?
+        ('allowedLateness:' allowedLateness=NUMBER)?
+        ('latenessUnit:' latenessUnit=TimeUnit)?
+        ('timestampSemantics:' timestampSemantics=TimestampSemantics)?
+        ('watermarkPolicy:' watermarkPolicy=WatermarkPolicy)?
+    )#
+    'end'
+;
+ 
+SessionWindow:
+    'Window<Session>' name=ID
+    (
+        ('gapDuration:' gapDuration=NUMBER)
+        ('gapUnit:' gapUnit=TimeUnit)
+        ('trigger:' trigger=WindowTrigger)?
+        ('allowedLateness:' allowedLateness=NUMBER)?
+        ('latenessUnit:' latenessUnit=TimeUnit)?
+        ('timestampSemantics:' timestampSemantics=TimestampSemantics)?
+        ('watermarkPolicy:' watermarkPolicy=WatermarkPolicy)?
+        ('maxSize:' maxSize=NUMBER)?
+    )#
+    'end'
+;
+ 
+GlobalWindow:
+    'Window<Global>' name=ID
+    (
+        ('trigger:' trigger=WindowTrigger)
+        ('timestampSemantics:' timestampSemantics=TimestampSemantics)?
+    )#
+    'end'
+;
+ 
+WindowSpec:
+    TumblingWindow | SlidingWindow | SessionWindow | GlobalWindow
+;
+ 
+UpdateStrategy:
+    'REPLACE' | 'ACCUMULATE' | 'RETRACT' | 'MERGE'
+;
+ 
+LateEventPolicy:
+    'LateEventPolicy' name=ID
+    (
+        ('gracePeriod:' gracePeriod=NUMBER)
+        ('gracePeriodUnit:' gracePeriodUnit=TimeUnit)
+        ('lateEventAction:' lateEventAction=LateEventAction)
+        ('updateStrategy:' updateStrategy=UpdateStrategy)?
+        ('maxLateArrivals:' maxLateArrivals=INT)?
+    )#
+    'end'
+;
+ 
+AggregationFunction:
+    'SUM' | 'COUNT' | 'MEAN' | 'MIN' | 'MAX' | 'VARIANCE' | 'STD_DEV' | 'QUANTILE' | 'MEDIAN' | 'FIRST' | 'LAST' | 'COLLECT'
+;
+ 
+BuiltinAggregation:
+    'agg' '{'
+    (
+        ('function:' function=AggregationFunction)
+        ('field:' field=STRING)
+        ('alias:' alias=ID)?
+        ('params:' '{' params+=KeyValueParam[','] '}')?
+    )#
+    '}'
+;
+ 
+CustomAggregation:
+    'customAgg' '{'
+    (
+        ('name:' aggName=ID)
+        ('function:' function=STRING)
+        ('inputFields:' '[' inputFields+=STRING[','] ']')
+        ('outputField:' outputField=STRING)
+        ('initialValue:' initialValue=STRING)?
+    )#
+    '}'
+;
+ 
+AggregationDef:
+    BuiltinAggregation | CustomAggregation
+;
+ 
+IncrementalStrategy:
+    'FULL_RECOMPUTE' | 'INCREMENTAL_UPDATE' | 'APPROXIMATE' | 'SKETCH_BASED'
+;
+ 
+AggregationSpec:
+    ('AggregationSpec' | 'Aggregation') name=ID
+    (
+        ('window:' window=[WindowSpec])
+        ('aggregations:' '-' aggregations+=AggregationDef['-'])
+        ('incrementalCompute:' incrementalCompute=BOOL)?
+        ('computeStrategy:' computeStrategy=IncrementalStrategy)?
+        ('lateEventPolicy:' lateEventPolicy=[LateEventPolicy])?
+    )#
+    'end'
+;
+ 
+ExtractionMethod:
+    'TIMESTAMP_PARTS' | 'STRING_SPLIT' | 'REGEX_EXTRACT' | 'JSON_PATH' | 'HASH' | 'EMBEDDING' | 'CUSTOM'
+;
+ 
+TransformOperation:
+    'LOG' | 'SQRT' | 'POWER' | 'ABS' | 'CLIP' | 'ROUND' | 'FLOOR' | 'CEIL' | 'NORMALIZE' | 'STANDARDIZE' | 'CUSTOM'
+;
+ 
+NormalizationMethod:
+    'MIN_MAX' | 'Z_SCORE' | 'ROBUST' | 'MAX_ABS' | 'UNIT_VECTOR' | 'DECIMAL_SCALING'
+;
+ 
+EncodingMethod:
+    'ONE_HOT' | 'LABEL' | 'BINARY' | 'FREQUENCY' | 'TARGET' | 'EMBEDDING' | 'HASHING'
+;
+ 
+ExtractionStep:
+    'Extract' '{'
+    (
+        ('inputField:' inputField=STRING)
+        ('outputField:' outputField=STRING)
+        ('method:' method=ExtractionMethod)
+        ('params:' '{' params+=KeyValueParam[','] '}')?
+    )#
+    '}'
+;
+ 
+TransformationStep:
+    'Transform' '{'
+    (
+        ('inputFields:' '[' inputFields+=STRING[','] ']')
+        ('outputField:' outputField=STRING)
+        ('operation:' operation=TransformOperation)
+        ('params:' '{' params+=KeyValueParam[','] '}')?
+        ('incrementalMethod:' incrementalMethod=STRING)?
+    )#
+    '}'
+;
+ 
+NormalizationStep:
+    'Normalize' '{'
+    (
+        ('fields:' '[' fields+=STRING[','] ']')
+        ('method:' method=NormalizationMethod)
+        ('windowSize:' windowSize=INT)?
+        ('updateFreq:' updateFreq=INT)?
+    )#
+    '}'
+;
+ 
+EncodingStep:
+    'Encode' '{'
+    (
+        ('inputField:' inputField=STRING)
+        ('outputField:' outputField=STRING)
+        ('method:' method=EncodingMethod)
+        ('params:' '{' params+=KeyValueParam[','] '}')?
+    )#
+    '}'
+;
+ 
+CustomFeatureStep:
+    'CustomFeature' '{'
+    (
+        ('name:' stepName=ID)
+        ('function:' function=STRING)
+        ('inputFields:' '[' inputFields+=STRING[','] ']')
+        ('outputFields:' '[' outputFields+=STRING[','] ']')
+        ('incrementalMethod:' incrementalMethod=STRING)?
+        ('params:' '{' params+=KeyValueParam[','] '}')?
+    )#
+    '}'
+;
+ 
+FeatureStep:
+    ExtractionStep | TransformationStep | NormalizationStep | EncodingStep | CustomFeatureStep
+;
+ 
+NormalizationConfig:
+    '{'
+    (
+        ('method:' method=NormalizationMethod)
+        ('adaptiveUpdate:' adaptiveUpdate=BOOL)?
+        ('windowSize:' windowSize=INT)?
+    )#
+    '}'
+;
+ 
+FeaturePipeline:
+    'FeaturePipeline' name=ID
+    (
+        ('inputSchema:' inputSchema=[SchemaDefinition])
+        ('steps:' '-' steps+=FeatureStep['-'])
+        ('outputSchema:' outputSchema=[SchemaDefinition])?
+        ('normalization:' normalization=NormalizationConfig)?
+        ('incrementalCompute:' incrementalCompute=BOOL)?
+    )#
+    'end'
+;
+ 
+LearningAlgorithm:
+    'SGD' | 'ADAM' | 'ADAGRAD' | 'RMSPROP' | 'HOEFFDING_TREE' | 'NAIVE_BAYES' | 'PASSIVE_AGGRESSIVE' | 'PERCEPTRON' | 'RIVER' | 'CUSTOM'
+;
+ 
+UpdateFreqType:
+    'PER_SAMPLE' | 'MINI_BATCH' | 'TIME_BASED' | 'COUNT_BASED'
+;
+ 
+UpdateFrequency:
+    '{'
+    (
+        ('type:' freqType=UpdateFreqType)
+        ('value:' value=NUMBER)?
+        ('unit:' unit=TimeUnit)?
+    )#
+    '}'
+;
+ 
+LRScheduleType:
+    'CONSTANT' | 'EXPONENTIAL_DECAY' | 'STEP_DECAY' | 'COSINE_ANNEALING' | 'ADAPTIVE'
+;
+ 
+LearningRateSchedule:
+    '{'
+    (
+        ('type:' scheduleType=LRScheduleType)
+        ('initialRate:' initialRate=NUMBER)
+        ('decayFactor:' decayFactor=NUMBER)?
+        ('decaySteps:' decaySteps=INT)?
+        ('minRate:' minRate=NUMBER)?
+    )#
+    '}'
+;
+ 
+ConvergenceCriteria:
+    '{'
+    (
+        ('metric:' metric=STRING)
+        ('threshold:' threshold=NUMBER)
+        ('patience:' patience=INT)?
+        ('minIterations:' minIterations=INT)?
+        ('maxIterations:' maxIterations=INT)?
+    )#
+    '}'
+;
+ 
+TaskType:
+    'CLASSIFICATION' | 'REGRESSION' | 'CLUSTERING' | 'ANOMALY_DETECTION' | 'RANKING' | 'FORECASTING'
+;
+ 
+OnlineLearner:
+    'OnlineLearner' name=ID
+    (
+        ('algorithm:' algorithm=LearningAlgorithm)
+        ('inputFeatures:' '[' inputFeatures+=STRING[','] ']')
+        ('targetField:' targetField=STRING)?
+        ('miniBatchSize:' miniBatchSize=INT)?
+        ('updateFrequency:' updateFrequency=UpdateFrequency)?
+        ('learningRateSchedule:' learningRateSchedule=LearningRateSchedule)?
+        ('convergenceCriteria:' convergenceCriteria=ConvergenceCriteria)?
+        ('hyperparams:' '{' hyperparams+=KeyValueParam[','] '}')?
+        ('taskType:' taskType=TaskType)?
+    )#
+    'end'
+;
+ 
+CheckpointFailureAction:
+    'ROLLBACK' | 'CONTINUE' | 'FAIL' | 'ALERT'
+;
+ 
+CheckpointPolicy:
+    '{'
+    (
+        ('interval:' interval=NUMBER)
+        ('intervalUnit:' intervalUnit=TimeUnit)
+        ('storage:' storage=STRING)
+        ('maxCheckpoints:' maxCheckpoints=INT)?
+        ('onFailure:' onFailure=CheckpointFailureAction)?
+        ('compression:' compression=BOOL)?
+    )#
+    '}'
+;
+ 
+VersionScheme:
+    'SEMANTIC' | 'TIMESTAMP' | 'SEQUENTIAL' | 'HASH_BASED'
+;
+ 
+VersioningStrategy:
+    '{'
+    (
+        ('scheme:' scheme=VersionScheme)
+        ('maxVersions:' maxVersions=INT)?
+        ('tagPolicy:' tagPolicy=STRING)?
+        ('registry:' registry=STRING)?
+    )#
+    '}'
+;
+ 
+StateBackendType:
+    'IN_MEMORY' | 'FILESYSTEM' | 'ROCKSDB' | 'REDIS' | 'S3' | 'GCS' | 'AZURE_BLOB'
+;
+ 
+StateBackend:
+    '{'
+    (
+        ('type:' backendType=StateBackendType)
+        ('path:' path=STRING)?
+        ('ttl:' ttl=NUMBER)?
+        ('ttlUnit:' ttlUnit=TimeUnit)?
+    )#
+    '}'
+;
+ 
+CleanupStrategy:
+    'DELETE' | 'ARCHIVE' | 'COMPRESS' | 'MOVE'
+;
+ 
+RetentionPolicy:
+    '{'
+    (
+        ('maxAge:' maxAge=NUMBER)
+        ('maxAgeUnit:' maxAgeUnit=TimeUnit)
+        ('maxVersions:' maxVersions=INT)?
+        ('cleanupStrategy:' cleanupStrategy=CleanupStrategy)?
+    )#
+    '}'
+;
+ 
+ModelState:
+    'ModelState' name=ID
+    (
+        ('learner:' learner=[OnlineLearner])
+        ('checkpointPolicy:' checkpointPolicy=CheckpointPolicy)
+        ('versioningStrategy:' versioningStrategy=VersioningStrategy)?
+        ('stateBackend:' stateBackend=StateBackend)?
+        ('retentionPolicy:' retentionPolicy=RetentionPolicy)?
+    )#
+    'end'
+;
+ 
+FieldMap:
+    sourceField=STRING '->' targetField=STRING (':' transformation=STRING)?
+;
+ 
+FieldMapping:
+    '{' mappings+=FieldMap[','] '}'
+;
+ 
+ServingStrategy:
+    'SINGLE_MODEL' | 'AB_TEST' | 'CANARY' | 'SHADOW' | 'ENSEMBLE' | 'CHAMPION_CHALLENGER'
+;
+ 
+LoadBalancingStrategy:
+    'ROUND_ROBIN' | 'LEAST_CONNECTIONS' | 'WEIGHTED' | 'RANDOM' | 'IP_HASH'
+;
+ 
+ServingPolicy:
+    '{'
+    (
+        ('strategy:' strategy=ServingStrategy)
+        ('minInstances:' minInstances=INT)?
+        ('maxInstances:' maxInstances=INT)?
+        ('scalingMetric:' scalingMetric=STRING)?
+        ('loadBalancing:' loadBalancing=LoadBalancingStrategy)?
+        ('timeout:' timeout=NUMBER)?
+    )#
+    '}'
+;
+ 
+DataFormat:
+    'JSON' | 'AVRO' | 'PROTOBUF' | 'CSV' | 'PARQUET' | 'MSGPACK' | 'XML'
+;
+ 
+CompressionType:
+    'NONE' | 'GZIP' | 'SNAPPY' | 'LZ4' | 'ZSTD'
+;
+ 
+OutputFormat:
+    '{'
+    (
+        ('format:' format=DataFormat)
+        ('schema:' schema=[SchemaDefinition])?
+        ('includeMetadata:' includeMetadata=BOOL)?
+        ('compressionType:' compressionType=CompressionType)?
+    )#
+    '}'
+;
+ 
+SLAPolicy:
+    'BEST_EFFORT' | 'GUARANTEED' | 'DEGRADED_MODE' | 'CIRCUIT_BREAKER'
+;
+ 
+LatencyRequirement:
+    '{'
+    (
+        ('maxLatencyMs:' maxLatencyMs=NUMBER)
+        ('p99LatencyMs:' p99LatencyMs=NUMBER)?
+        ('p95LatencyMs:' p95LatencyMs=NUMBER)?
+        ('slaPolicy:' slaPolicy=SLAPolicy)?
+    )#
+    '}'
+;
+ 
+InferenceSystem:
+    'InferenceSystem' name=ID
+    (
+        ('modelState:' modelState=[ModelState])
+        ('inputMapping:' inputMapping=FieldMapping)
+        ('outputMapping:' outputMapping=FieldMapping)
+        ('servingPolicy:' servingPolicy=ServingPolicy)?
+        ('outputFormat:' outputFormat=OutputFormat)?
+        ('latencyRequirement:' latencyRequirement=LatencyRequirement)?
+    )#
+    'end'
+;
+ 
+SinkType:
+    'KAFKA' | 'DATABASE' | 'FILE' | 'API' | 'MESSAGE_QUEUE' | 'STREAM' | 'DASHBOARD' | 'ALERT'
+;
+ 
+RoutingStrategy:
+    'BROADCAST' | 'PARTITION' | 'CONTENT_BASED' | 'ROUND_ROBIN' | 'CUSTOM'
+;
+ 
+RoutingRule:
+    '{'
+    (
+        ('condition:' condition=STRING)
+        ('destination:' destination=ID)
+        ('priority:' priority=INT)?
+    )#
+    '}'
+;
+ 
+RoutingConfig:
+    '{'
+    (
+        ('strategy:' strategy=RoutingStrategy)
+        ('rules:' '-' rules+=RoutingRule['-'])?
+    )#
+    '}'
+;
+ 
+PipelineErrorHandling:
+    '{'
+    (
+        ('strategy:' strategy=ErrorAction)
+        ('retryPolicy:' retryPolicy=RetryPolicy)?
+        ('fallbackPipeline:' fallbackPipeline=ID)?
+        ('alertOnError:' alertOnError=BOOL)?
+        ('maxErrors:' maxErrors=INT)?
+    )#
+    '}'
+;
+ 
+SourceStage:
+    'stage<Source>' '{'
+    (
+        ('name:' stageName=ID)
+        ('source:' source=[StreamSource])
+        ('schema:' schema=[SchemaDefinition])?
+        ('parallelism:' parallelism=INT)?
+    )#
+    '}'
+;
+ 
+TransformStage:
+    'stage<Transform>' '{'
+    (
+        ('name:' stageName=ID)
+        ('featurePipeline:' featurePipeline=[FeaturePipeline])
+        ('parallelism:' parallelism=INT)?
+    )#
+    '}'
+;
+ 
+AggregationStage:
+    'stage<Aggregation>' '{'
+    (
+        ('name:' stageName=ID)
+        ('aggregation:' aggregation=[AggregationSpec])
+        ('parallelism:' parallelism=INT)?
+    )#
+    '}'
+;
+ 
+FeatureStage:
+    'stage<Feature>' '{'
+    (
+        ('name:' stageName=ID)
+        ('featurePipeline:' featurePipeline=[FeaturePipeline])
+        ('window:' window=[WindowSpec])?
+        ('parallelism:' parallelism=INT)?
+    )#
+    '}'
+;
+ 
+TrainingStage:
+    'stage<Training>' '{'
+    (
+        ('name:' stageName=ID)
+        ('learner:' learner=[OnlineLearner])
+        ('modelState:' modelState=[ModelState])?
+        ('parallelism:' parallelism=INT)?
+    )#
+    '}'
+;
+ 
+InferenceStage:
+    'stage<Inference>' '{'
+    (
+        ('name:' stageName=ID)
+        ('inferenceSystem:' inferenceSystem=[InferenceSystem])
+        ('parallelism:' parallelism=INT)?
+    )#
+    '}'
+;
+ 
+SinkStage:
+    'stage<Sink>' '{'
+    (
+        ('name:' stageName=ID)
+        ('sinkType:' sinkType=SinkType)
+        ('endpoint:' endpoint=STRING)
+        ('format:' format=DataFormat)?
+        ('auth:' auth=AuthConfig)?
+        ('parallelism:' parallelism=INT)?
+    )#
+    '}'
+;
+ 
+BranchStage:
+    'stage<Branch>' '{'
+    (
+        ('name:' stageName=ID)
+        ('condition:' condition=STRING)
+        ('trueBranch:' trueBranch=ID)
+        ('falseBranch:' falseBranch=ID)
+    )#
+    '}'
+;
+ 
+PipelineStage:
+    SourceStage | TransformStage | AggregationStage | FeatureStage | TrainingStage | InferenceStage | SinkStage | BranchStage
+;
+ 
+Pipeline:
+    'Pipeline' name=ID
+    (
+        ('stages:' '-' stages+=PipelineStage['-'])
+        ('routing:' routing=RoutingConfig)?
+        ('errorHandling:' pipelineErrorHandling=PipelineErrorHandling)?
+        ('parallelism:' parallelism=INT)?
+        ('checkpointing:' checkpointing=BOOL)?
+    )#
+    'end'
+;
+ 
+MetricType:
+    'COUNTER' | 'GAUGE' | 'HISTOGRAM' | 'SUMMARY' | 'THROUGHPUT' | 'LATENCY' | 'ERROR_RATE' | 'ACCURACY' | 'PRECISION' | 'RECALL' | 'F1'
+;
+ 
+MetricDefinition:
+    '{'
+    (
+        ('name:' metricName=ID)
+        ('type:' metricType=MetricType)
+        ('field:' field=STRING)?
+        ('aggregation:' aggregation=AggregationFunction)?
+        ('window:' window=[WindowSpec])?
+        ('labels:' '{' labels+=KeyValueParam[','] '}')?
+    )#
+    '}'
+;
+ 
+MetricAggregationPolicy:
+    '{'
+    (
+        ('method:' method=AggregationFunction)
+        ('window:' window=[WindowSpec])?
+        ('retentionPeriod:' retentionPeriod=NUMBER)?
+        ('retentionUnit:' retentionUnit=TimeUnit)?
+    )#
+    '}'
+;
+ 
+AlertCondition:
+    'GREATER_THAN_OR_EQUAL' | 'LESS_THAN_OR_EQUAL' | 'GREATER_THAN' | 'LESS_THAN' | 'NOT_EQUALS' | 'EQUALS' | 'ANOMALY'
+;
+ 
+AlertSeverity:
+    'INFO' | 'WARNING' | 'CRITICAL' | 'FATAL'
+;
+ 
+AlertRule:
+    '{'
+    (
+        ('metric:' metric=ID)
+        ('condition:' condition=AlertCondition)
+        ('threshold:' threshold=NUMBER)
+        ('severity:' severity=AlertSeverity)
+        ('notificationChannels:' '[' notificationChannels+=STRING[','] ']')?
+        ('cooldownPeriod:' cooldownPeriod=NUMBER)?
+        ('message:' message=STRING)?
+    )#
+    '}'
+;
+ 
+EvalMetricType:
+    'ACCURACY' | 'PRECISION' | 'RECALL' | 'F1' | 'AUC_ROC' | 'MAE' | 'MSE' | 'RMSE' | 'R2' | 'LOG_LOSS' | 'CUSTOM'
+;
+ 
+BaselineType:
+    'FIXED_VALUE' | 'PREVIOUS_VERSION' | 'ROLLING_AVERAGE' | 'CHAMPION_MODEL' | 'NAIVE_PREDICTOR'
+;
+ 
+BaselineConfig:
+    '{'
+    (
+        ('type:' baselineType=BaselineType)
+        ('reference:' reference=STRING)?
+        ('value:' value=NUMBER)?
+    )#
+    '}'
+;
+ 
+EvalTriggerType:
+    'TIME_BASED' | 'COUNT_BASED' | 'ON_DEMAND' | 'CONTINUOUS'
+;
+ 
+EvaluationTrigger:
+    '{'
+    (
+        ('type:' triggerType=EvalTriggerType)
+        ('value:' value=NUMBER)?
+        ('unit:' unit=TimeUnit)?
+    )#
+    '}'
+;
+ 
+ComparisonStrategy:
+    'ABSOLUTE' | 'RELATIVE' | 'STATISTICAL_TEST' | 'THRESHOLD_BASED'
+;
+ 
+EvaluationConfig:
+    '{'
+    (
+        ('metrics:' '[' evalMetrics+=EvalMetricType[','] ']')
+        ('evaluationWindow:' evaluationWindow=[WindowSpec])?
+        ('baseline:' baseline=BaselineConfig)?
+        ('triggerCondition:' triggerCondition=EvaluationTrigger)?
+        ('comparisonStrategy:' comparisonStrategy=ComparisonStrategy)?
+    )#
+    '}'
+;
+ 
+MonitoringConfig:
+    'MonitoringConfig' name=ID
+    (
+        ('metrics:' '-' metrics+=MetricDefinition['-'])
+        ('collectionInterval:' collectionInterval=NUMBER)
+        ('collectionIntervalUnit:' collectionIntervalUnit=TimeUnit)
+        ('aggregationPolicy:' aggregationPolicy=MetricAggregationPolicy)?
+        ('alertRules:' '-' alertRules+=AlertRule['-'])?
+        ('evaluationConfig:' evaluationConfig=EvaluationConfig)?
+        ('storage:' storage=STRING)?
+    )#
+    'end'
+;
+ 
+DriftDetectionMethod:
+    'KS_TEST' | 'PSI' | 'JENSEN_SHANNON' | 'WASSERSTEIN' | 'ADWIN' | 'PAGE_HINKLEY' | 'DDM' | 'EDDM' | 'CUSTOM'
+;
+ 
+DriftSensitivity:
+    'LOW' | 'MEDIUM' | 'HIGH' | 'CUSTOM'
+;
+ 
+DriftSeverityCondition:
+    'driftSeverity' '{'
+    (
+        ('metric:' metric=STRING)
+        ('threshold:' threshold=NUMBER)
+        ('comparison:' comparison=AlertCondition)
+    )#
+    '}'
+;
+ 
+PerformanceDegradationCondition:
+    'performanceDegradation' '{'
+    (
+        ('metric:' metric=EvalMetricType)
+        ('threshold:' threshold=NUMBER)
+        ('comparison:' comparison=AlertCondition)
+    )#
+    '}'
+;
+ 
+DataVolumeCondition:
+    'dataVolume' '{'
+    (
+        ('count:' count=INT)
+        ('comparison:' comparison=AlertCondition)
+    )#
+    '}'
+;
+ 
+TimeBasedRetrainingCondition:
+    'timeBased' '{'
+    (
+        ('interval:' interval=NUMBER)
+        ('unit:' unit=TimeUnit)
+    )#
+    '}'
+;
+ 
+RetrainingCondition:
+    DriftSeverityCondition | PerformanceDegradationCondition | DataVolumeCondition | TimeBasedRetrainingCondition
+;
+ 
+RetrainingTrigger:
+    '{'
+    (
+        ('conditions:' '-' conditions+=RetrainingCondition['-'])
+        ('operator:' operator=TriggerOperator)?
+    )#
+    '}'
+;
+ 
+DataSelectionStrategy:
+    'ALL_RECENT' | 'SLIDING_WINDOW' | 'RESERVOIR_SAMPLING' | 'IMPORTANCE_WEIGHTED' | 'STRATIFIED' | 'CUSTOM'
+;
+ 
+ModelUpdateProcedure:
+    'FULL_RETRAIN' | 'INCREMENTAL_UPDATE' | 'FINE_TUNE' | 'ENSEMBLE_UPDATE' | 'WARM_START'
+;
+ 
+RetrainingPolicy:
+    '{'
+    (
+        ('dataSelectionStrategy:' dataSelectionStrategy=DataSelectionStrategy)
+        ('lookbackWindow:' lookbackWindow=[WindowSpec])?
+        ('minSamples:' minSamples=INT)?
+        ('maxSamples:' maxSamples=INT)?
+        ('updateProcedure:' updateProcedure=ModelUpdateProcedure)
+        ('validationRequired:' validationRequired=BOOL)?
+        ('rollbackOnFailure:' rollbackOnFailure=BOOL)?
+    )#
+    '}'
+;
+ 
+DriftDetector:
+    'DriftDetector' name=ID
+    (
+        ('monitoredFields:' '[' monitoredFields+=STRING[','] ']')
+        ('detectionMethod:' detectionMethod=DriftDetectionMethod)
+        ('referenceWindow:' referenceWindow=[WindowSpec])?
+        ('detectionWindow:' detectionWindow=[WindowSpec])?
+        ('threshold:' threshold=NUMBER)?
+        ('retrainingTrigger:' retrainingTrigger=RetrainingTrigger)?
+        ('retrainingPolicy:' retrainingPolicy=RetrainingPolicy)?
+        ('alertOnDrift:' alertOnDrift=BOOL)?
+        ('sensitivity:' sensitivity=DriftSensitivity)?
+    )#
+    'end'
+;
+ 
+EndpointType:
+    'REST' | 'GRPC' | 'WEBSOCKET' | 'KAFKA' | 'MQTT' | 'SSE' | 'GRAPHQL'
+;
+ 
+DeliveryType:
+    'PUSH' | 'PULL' | 'STREAMING' | 'BATCH' | 'PUBLISH_SUBSCRIBE'
+;
+ 
+DeliveryMechanism:
+    '{'
+    (
+        ('type:' deliveryType=DeliveryType)
+        ('topic:' topic=STRING)?
+        ('batchSize:' batchSize=INT)?
+        ('flushInterval:' flushInterval=NUMBER)?
+        ('flushIntervalUnit:' flushIntervalUnit=TimeUnit)?
+    )#
+    '}'
+;
+ 
+ScalingPolicy:
+    '{'
+    (
+        ('minReplicas:' minReplicas=INT)
+        ('maxReplicas:' maxReplicas=INT)
+        ('targetCPU:' targetCPU=NUMBER)?
+        ('targetMemory:' targetMemory=NUMBER)?
+        ('targetRPS:' targetRPS=NUMBER)?
+        ('scaleUpCooldown:' scaleUpCooldown=NUMBER)?
+        ('scaleDownCooldown:' scaleDownCooldown=NUMBER)?
+    )#
+    '}'
+;
+ 
+PredictionEndpoint:
+    'PredictionEndpoint' name=ID
+    (
+        ('inferenceSystem:' inferenceSystem=[InferenceSystem])
+        ('endpointType:' endpointType=EndpointType)
+        ('path:' path=STRING)?
+        ('port:' port=INT)?
+        ('outputFormat:' outputFormat=OutputFormat)?
+        ('deliveryMechanism:' deliveryMechanism=DeliveryMechanism)?
+        ('latencyRequirement:' latencyRequirement=LatencyRequirement)?
+        ('scalingPolicy:' scalingPolicy=ScalingPolicy)?
+        ('auth:' auth=AuthConfig)?
+    )#
+    'end'
+;
+ 
+Comment: CommentLine | CommentBlock;
+CommentLine: /\/\/.*?$/;
+CommentBlock: /\/\*(.|\n)*?\*\//;

@@ -1,0 +1,484 @@
+NLPLLMModel:
+    imports*=Import
+    (
+        (dataSources*=DataSource)
+        (languages*=LanguageConfig)
+        (preprocessors*=Preprocessor)
+        (representations*=Representation)
+        (embeddings*=EmbeddingConfig)
+        (labelSets*=LabelSet)
+        (extractionTasks*=ExtractionTask)
+        (workflows*=Workflow)
+        (pipelines*=Pipeline)
+        (trainingConfigs*=TrainingConfig)
+        (qualitySignals*=QualitySignal)
+        (driftPolicies*=DriftPolicy)
+        (retrainingPolicies*=RetrainingPolicy)
+    )#
+;
+ 
+Import:
+    'import' importURI=FQN ('as' name=ID)?
+;
+ 
+FQN:
+    ID ('.' ID)*
+;
+ 
+TextField:
+    name=ID (':' fieldPath=STRING)?
+;
+ 
+DocumentBoundary:
+    'line' | 'paragraph' | 'field' | 'file' | 'custom' | 'sentence' | 'page' | 'document'
+;
+ 
+DataSourceType:
+    'file' | 'directory' | 'database' | 'stream' | 'api' | 'inline' | 'cloud' | 'queue'
+;
+ 
+DataFormat:
+    'plaintext' | 'jsonl' | 'json' | 'csv' | 'xml' | 'html' | 'pdf' | 'parquet' | 'avro' | 'tsv'
+;
+ 
+EncodingType:
+    'utf-8' | 'utf-16' | 'ascii' | 'latin-1' | 'utf-32' | 'iso-8859-1'
+;
+ 
+DataSource:
+    'DataSource' name=ID
+    (
+        ('type:' sourceType=DataSourceType)
+        ('location:' location=STRING)?
+        ('format:' format=DataFormat)?
+        ('encoding:' encoding=EncodingType)?
+        ('textFields:' '-' textFields+=TextField['-'])?
+        ('documentBoundary:' documentBoundary=DocumentBoundary)?
+        ('language:' language=STRING)?
+        ('batchSize:' batchSize=INT)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+TokenizerType:
+    'whitespace' | 'wordpiece' | 'bpe' | 'sentencepiece' | 'character' | 'rule-based' | 'neural'
+;
+ 
+SentenceDetectorType:
+    'rule-based' | 'statistical' | 'neural' | 'punctuation'
+;
+ 
+StopwordConfig:
+    'builtin' | 'custom' | 'none'
+;
+ 
+TextDirection:
+    'ltr' | 'rtl' | 'auto'
+;
+ 
+LanguageConfig:
+    'Language' name=ID
+    (
+        ('code:' code=STRING)
+        ('name:' langName=STRING)?
+        ('tokenizer:' tokenizer=TokenizerType)?
+        ('sentenceDetector:' sentenceDetector=SentenceDetectorType)?
+        ('stemmer:' stemmer=STRING)?
+        ('stopwords:' stopwords=StopwordConfig)?
+        ('direction:' direction=TextDirection)?
+        ('script:' script=STRING)?
+        ('fallback:' fallback=[LanguageConfig])?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+NormParam:
+    key=ID '=' value=STRING
+;
+ 
+NormalizationType:
+    'lowercase' | 'uppercase' | 'unicode' | 'whitespace' | 'punctuation' | 'diacritics' | 'numbers' | 'html-entities' | 'urls' | 'emails'
+;
+ 
+NormalizationStep:
+    'normalize' ':' normType=NormalizationType ('(' params+=NormParam[','] ')')?
+;
+ 
+CleanupType:
+    'remove-html' | 'remove-urls' | 'remove-emails' | 'remove-special-chars' | 'remove-numbers' | 'remove-stopwords' | 'deduplicate' | 'trim' | 'collapse-whitespace'
+;
+ 
+CleanupStep:
+    'cleanup' ':' cleanType=CleanupType ('(' params+=NormParam[','] ')')?
+;
+ 
+SegmentationType:
+    'sentences' | 'paragraphs' | 'tokens' | 'chunks' | 'sliding-window' | 'fixed-length' | 'custom'
+;
+ 
+SegmentationStep:
+    'segment' ':' segType=SegmentationType ('(' params+=NormParam[','] ')')?
+;
+ 
+CustomStep:
+    'custom' ':' stepName=STRING ('(' params+=NormParam[','] ')')?
+;
+ 
+PreprocessingStep:
+    NormalizationStep | CleanupStep | SegmentationStep | CustomStep
+;
+ 
+LinguisticUnit:
+    'token' | 'sentence' | 'phrase' | 'paragraph' | 'document' | 'chunk' | 'ngram'
+;
+ 
+SegmentationConfig:
+    'SegmentationConfig'
+    (
+        ('method:' method=SegmentationType)
+        ('windowSize:' windowSize=INT)?
+        ('overlap:' overlap=INT)?
+        ('delimiter:' delimiter=STRING)?
+    )#
+    'end'
+;
+ 
+Preprocessor:
+    'Preprocessor' name=ID
+    (
+        ('appliesTo:' appliesTo=[DataSource])?
+        ('language:' language=[LanguageConfig])?
+        ('steps:' '-' steps+=PreprocessingStep['-'])
+        ('segmentation:' segmentation=SegmentationConfig)?
+        ('linguisticUnit:' linguisticUnit=LinguisticUnit)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+RepresentationType:
+    'symbolic' | 'contextual' | 'semantic' | 'sparse' | 'dense' | 'hybrid' | 'bag-of-words' | 'tfidf' | 'knowledge-graph'
+;
+ 
+GranularityLevel:
+    'character' | 'subword' | 'word' | 'phrase' | 'sentence' | 'document'
+;
+ 
+Representation:
+    'Representation' name=ID
+    (
+        ('type:' repType=RepresentationType)
+        ('linguisticUnit:' linguisticUnit=LinguisticUnit)?
+        ('language:' language=[LanguageConfig])?
+        ('granularity:' granularity=GranularityLevel)?
+        ('contextWindow:' contextWindow=INT)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+EmbeddingModel:
+    'general-purpose' | 'domain-specific' | 'multilingual' | 'cross-lingual' | 'sentence-level' | 'word-level' | 'subword-level' | 'task-specific' | 'lightweight' | 'large'
+;
+ 
+EmbeddingTask:
+    'similarity' | 'classification' | 'retrieval' | 'clustering' | 'generation' | 'extraction' | 'ranking'
+;
+ 
+PoolingStrategy:
+    'mean' | 'max' | 'cls' | 'sum' | 'weighted-mean'
+;
+ 
+EmbeddingConfig:
+    'Embedding' name=ID
+    (
+        ('model:' model=EmbeddingModel)
+        ('language:' language=[LanguageConfig])?
+        ('dimensions:' dimensions=INT)?
+        ('task:' task=EmbeddingTask)?
+        ('multilingual:' multilingual=BOOL)?
+        ('normalize:' normalize=BOOL)?
+        ('pooling:' pooling=PoolingStrategy)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+LabelTask:
+    'classification' | 'ner' | 'relation' | 'sentiment' | 'intent' | 'slot-filling' | 'coreference' | 'pos' | 'chunking' | 'custom'
+;
+ 
+LabelDefinition:
+    name=ID (':' meaning=STRING)? ('(' 'color:' color=STRING ')')?
+;
+ 
+LabelConstraintType:
+    'mutually-exclusive' | 'hierarchical' | 'ordered' | 'required' | 'optional' | 'max-per-span' | 'min-per-document'
+;
+ 
+LabelConstraint:
+    constraintType=LabelConstraintType ':' value=STRING
+;
+ 
+RelationshipType:
+    'parent-of' | 'subtype-of' | 'implies' | 'excludes' | 'co-occurs-with' | 'precedes'
+;
+ 
+LabelRelationship:
+    from=ID '->' to=ID (':' relType=STRING)?
+;
+ 
+LabelSet:
+    'LabelSet' name=ID
+    (
+        ('task:' task=LabelTask)
+        ('labels:' '-' labels+=LabelDefinition['-'])
+        ('constraints:' '-' constraints+=LabelConstraint['-'])?
+        ('relationships:' '-' relationships+=LabelRelationship['-'])?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+ExtractionType:
+    'entity-detection' | 'entity-classification' | 'relation-identification' | 'event-extraction' | 'coreference-resolution' | 'slot-filling' | 'keyword-extraction' | 'aspect-extraction'
+;
+ 
+EntityTypeSpec:
+    name=ID (':' meaning=STRING)? ('(' 'examples:' '[' examples+=STRING[','] ']' ')')?
+;
+ 
+RelationSpec:
+    name=ID 'from' fromType=ID 'to' toType=ID (':' meaning=STRING)?
+;
+ 
+ExtractionTask:
+    'ExtractionTask' name=ID
+    (
+        ('type:' extractType=ExtractionType)
+        ('labelSet:' labelSet=[LabelSet])?
+        ('linguisticUnit:' linguisticUnit=LinguisticUnit)?
+        ('entityTypes:' '-' entityTypes+=EntityTypeSpec['-'])?
+        ('relations:' '-' relations+=RelationSpec['-'])?
+        ('representation:' representation=[Representation])?
+        ('embedding:' embedding=[EmbeddingConfig])?
+        ('language:' language=[LanguageConfig])?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+WorkflowTask:
+    'classification' | 'summarization' | 'translation' | 'question-answering' | 'generation' | 'extraction' | 'sentiment-analysis' | 'intent-detection' | 'topic-modeling' | 'similarity' | 'ranking' | 'custom'
+;
+ 
+MultilingualPath:
+    language=[LanguageConfig] ':' preprocessor=[Preprocessor] ('->' representation=[Representation])?
+;
+ 
+ProcessingMode:
+    'realtime' | 'batch' | 'hybrid' | 'streaming' | 'on-demand'
+;
+ 
+Workflow:
+    'Workflow' name=ID
+    (
+        ('task:' task=WorkflowTask)
+        ('dataSource:' dataSource=[DataSource])?
+        ('preprocessor:' preprocessor=[Preprocessor])?
+        ('representation:' representation=[Representation])?
+        ('embedding:' embedding=[EmbeddingConfig])?
+        ('extractionTask:' extractionTask=[ExtractionTask])?
+        ('language:' language=[LanguageConfig])?
+        ('multilingualPaths:' '-' multilingualPaths+=MultilingualPath['-'])?
+        ('labelSet:' labelSet=[LabelSet])?
+        ('mode:' mode=ProcessingMode)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+StageType:
+    'ingestion' | 'preprocessing' | 'representation' | 'embedding' | 'extraction' | 'classification' | 'generation' | 'postprocessing' | 'output' | 'branching' | 'merging'
+;
+ 
+StageRef:
+    'stage' ':' ref=[Workflow]
+;
+ 
+InlineStage:
+    'stage' 'name=' name=ID
+    (
+        ('type:' stageType=StageType)
+        ('input:' input=LinguisticUnit)?
+        ('output:' output=LinguisticUnit)?
+        ('preprocessor:' preprocessor=[Preprocessor])?
+        ('workflow:' workflow=[Workflow])?
+        ('condition:' condition=STRING)?
+    )#
+    'end'
+;
+ 
+PipelineStage:
+    StageRef | InlineStage
+;
+ 
+PipelineBranch:
+    name=ID ':' condition=STRING '->' target=ID
+;
+ 
+Pipeline:
+    'Pipeline' name=ID
+    (
+        ('stages:' '-' stages+=PipelineStage['-'])
+        ('mode:' mode=ProcessingMode)?
+        ('branches:' '-' branches+=PipelineBranch['-'])?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+TrainingPhase:
+    'training' | 'validation' | 'inference' | 'fine-tuning' | 'evaluation' | 'adaptation'
+;
+ 
+CheckpointStrategy:
+    'best-only' | 'all' | 'periodic' | 'none'
+;
+ 
+AdaptationMode:
+    'full-retrain' | 'fine-tune' | 'few-shot' | 'zero-shot' | 'continual' | 'transfer'
+;
+ 
+TrainingConfig:
+    'TrainingConfig' name=ID
+    (
+        ('phase:' phase=TrainingPhase)
+        ('dataSource:' dataSource=[DataSource])?
+        ('validationSource:' validationSource=[DataSource])?
+        ('workflow:' workflow=[Workflow])?
+        ('pipeline:' pipeline=[Pipeline])?
+        ('labelSet:' labelSet=[LabelSet])?
+        ('epochs:' epochs=INT)?
+        ('batchSize:' batchSize=INT)?
+        ('learningRate:' learningRate=FLOAT)?
+        ('earlyStoppingPatience:' earlyStoppingPatience=INT)?
+        ('checkpointStrategy:' checkpointStrategy=CheckpointStrategy)?
+        ('adaptationMode:' adaptationMode=AdaptationMode)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+QualityMetric:
+    'accuracy' | 'f1' | 'precision' | 'recall' | 'bleu' | 'rouge' | 'perplexity' | 'exact-match' | 'semantic-similarity' | 'coherence' | 'fluency' | 'coverage' | 'latency' | 'throughput'
+;
+ 
+QualityComparator:
+    'greater-than-or-equal' | 'less-than-or-equal' | 'greater-than' | 'less-than' | 'equal-to'
+;
+ 
+AcceptanceCriterion:
+    metric=QualityMetric comparator=QualityComparator value=FLOAT (':' description=STRING)?
+;
+ 
+QualitySignal:
+    'QualitySignal' name=ID
+    (
+        ('metric:' metric=QualityMetric)
+        ('threshold:' threshold=FLOAT)?
+        ('comparator:' comparator=QualityComparator)?
+        ('window:' window=INT)?
+        ('linguisticUnit:' linguisticUnit=LinguisticUnit)?
+        ('task:' task=WorkflowTask)?
+        ('acceptanceCriteria:' '-' acceptanceCriteria+=AcceptanceCriterion['-'])?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+DriftDetectionMethod:
+    'vocabulary-shift' | 'topic-drift' | 'statistical-distance' | 'embedding-distance' | 'label-distribution' | 'language-change' | 'custom'
+;
+ 
+LinguisticAspect:
+    'vocabulary' | 'syntax' | 'semantics' | 'topics' | 'sentiment' | 'style' | 'language' | 'entities'
+;
+ 
+DriftSensitivity:
+    'low' | 'medium' | 'high' | 'custom'
+;
+ 
+DriftAction:
+    'alert' | 'log' | 'trigger-retraining' | 'pause-pipeline' | 'switch-model' | 'notify'
+;
+ 
+DriftPolicy:
+    'DriftPolicy' name=ID
+    (
+        ('detectionMethod:' detectionMethod=DriftDetectionMethod)
+        ('linguisticAspect:' linguisticAspect=LinguisticAspect)?
+        ('sensitivity:' sensitivity=DriftSensitivity)?
+        ('windowSize:' windowSize=INT)?
+        ('referenceDataSource:' referenceDataSource=[DataSource])?
+        ('currentDataSource:' currentDataSource=[DataSource])?
+        ('signals:' '-' signals+=[QualitySignal]['-'])?
+        ('onDriftDetected:' onDriftDetected=DriftAction)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+RetrainingTriggerType:
+    'drift-detected' | 'quality-degradation' | 'scheduled' | 'data-volume' | 'manual' | 'label-change' | 'vocabulary-change' | 'topic-change'
+;
+ 
+RetrainingTrigger:
+    triggerType=RetrainingTriggerType (':' value=STRING)?
+;
+ 
+RetrainingSchedule:
+    'daily' | 'weekly' | 'monthly' | 'hourly' | 'on-demand' | 'continuous'
+;
+ 
+RetrainingConditionType:
+    'quality-signal' | 'drift-score' | 'data-age' | 'sample-count' | 'error-rate' | 'coverage-drop'
+;
+ 
+RetrainingCondition:
+    conditionType=RetrainingConditionType comparator=QualityComparator value=FLOAT (':' description=STRING)?
+;
+ 
+RetrainingPriority:
+    'low' | 'medium' | 'high' | 'critical'
+;
+ 
+RetrainingPolicy:
+    'RetrainingPolicy' name=ID
+    (
+        ('triggers:' '-' triggers+=RetrainingTrigger['-'])
+        ('trainingConfig:' trainingConfig=[TrainingConfig])
+        ('driftPolicy:' driftPolicy=[DriftPolicy])?
+        ('schedule:' schedule=RetrainingSchedule)?
+        ('conditions:' '-' conditions+=RetrainingCondition['-'])?
+        ('priority:' priority=RetrainingPriority)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+Comment:
+    CommentLine | CommentBlock
+;
+ 
+CommentLine:
+    /\/\/.*?$/
+;
+ 
+CommentBlock:
+    /\/\*(.|\n)*?\*\//
+;
+
+

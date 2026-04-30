@@ -1,0 +1,44 @@
+1. Dataset Definition and Semantics 
+The grammar should support: Explicit declaration of datasets, including data sources, data splits (e.g., training, validation, evaluation), feature types, labels, and basic constraints (such as required fields or acceptable value ranges).
+ 
+2. Data Versioning Awareness 
+The grammar should support: Referencing specific dataset versions or snapshots, enabling users to clearly associate training workflows with a well defined state of the data.   
+ 
+3. Multi-Stage Training Workflow Modeling 
+The grammar should support: The description of multi-stage training workflows, where each stage can depend on outputs or states produced by previous stages.    
+ 
+4. Stage-Level Configuration 
+The grammar should support: Stage-specific configuration, allowing users to express that different training stages may use different datasets, durations, objectives, or evaluation criteria.
+ 
+5. Model Structure Declaration 
+The grammar should support: High-level model structure definitions, including the ability to declare layers, reusable blocks, and the ordering or connectivity between them.
+ 
+6. Parameter Sharing Expression 
+The grammar should support: Explicit expression of shared parameters, enabling users to indicate when multiple parts of a model reuse the same configurable components.
+ 
+7. Attention and Focus Mechanisms 
+The grammar should support: The declaration of attention or focus mechanisms as named components that can be attached to relevant parts of the model structure.
+ 
+8. Modular Model Composition 
+The grammar should support: Modular composition, allowing users to define, name, and reuse model substructures across different models or training workflows.
+ 
+9. Pretrained State Initialization 
+The grammar should support: Initializing a model or substructure from a predefined trained state, referenced symbolically rather than technically.
+ 
+10. Selective Freezing and Unfreezing 
+The grammar should support: Declaring which model parts are fixed or adjustable during specific training stages, using intuitive, human-readable rules.
+ 
+11. Head Replacement and Extension 
+The grammar should support: Replacing or extending the output portion of a model, enabling adaptation of an existing model structure to new prediction goals.
+ 
+12. Retraining Trigger Definition 
+The grammar should support: Declaration of retraining triggers, such as the arrival of new data, degradation of observed quality metrics, or detected changes in data characteristics.
+ 
+13. Metric-Based Conditions 
+The grammar should support: Metric-based conditions, allowing users to express acceptable ranges, thresholds, or trends that influence retraining or workflow transitions.
+ 
+14. Data Change and Drift Awareness 
+The grammar should support: Expressing sensitivity to data distribution changes, enabling users to specify when retraining should occur due to significant deviations from previous data behavior.
+ 
+15. Validation of Conceptual Consistency 
+The grammar should support: Validation rules that ensure conceptual consistency, such as ensuring referenced datasets exist, model parts are defined before use, and training stages form a coherent workflow.

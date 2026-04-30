@@ -1,0 +1,1198 @@
+DeepLearningMCP:
+    sections*=Section
+;
+ 
+Comment:
+    CommentLine | CommentBlock
+;
+ 
+CommentLine:
+    /\/\/.*?$/
+;
+ 
+CommentBlock:
+    /\/\*(.|\n)*?\*\//
+;
+ 
+DataSource:
+    FileSource | DirectorySource | InMemorySource
+;
+ 
+FileSource:
+    'File' '(' path=STRING ')'
+;
+ 
+DirectorySource:
+    'Directory' '(' path=STRING ')'
+;
+ 
+InMemorySource:
+    'InMemory' '(' variable=STRING ')'
+;
+ 
+DataFormat:
+    'CSV' | 'JSON' | 'IMAGE' | 'NPY' | 'HDF5' | 'TFRecord' | 'PARQUET' | 'TEXT' | 'CUSTOM'
+;
+ 
+DataType:
+    'float32' | 'float64' | 'int32' | 'int64' | 'uint8' | 'bool'
+;
+ 
+CropStrategy:
+    'center' | 'random' | 'five'
+;
+ 
+FlipDirection:
+    'horizontal' | 'vertical' | 'both'
+;
+ 
+NormalizationStep:
+    'Normalize' '(' 'mean:' '[' mean+=FLOAT[','] ']' 'std:' '[' std+=FLOAT[','] ']' ')'
+;
+ 
+StandardizationStep:
+    'Standardize' '(' ')'
+;
+ 
+ResizeStep:
+    'Resize' '(' 'width:' width=INT 'height:' height=INT ')'
+;
+ 
+CropStep:
+    'Crop' '(' 'size:' size=INT ('strategy:' strategy=CropStrategy)? ')'
+;
+ 
+FlipStep:
+    'Flip' '(' 'direction:' direction=FlipDirection 'probability:' probability=FLOAT ')'
+;
+ 
+RotationStep:
+    'Rotate' '(' 'degrees:' degrees=FLOAT 'probability:' probability=FLOAT ')'
+;
+ 
+ColorJitterStep:
+    'ColorJitter' '(' ('brightness:' brightness=FLOAT)? ('contrast:' contrast=FLOAT)? ('saturation:' saturation=FLOAT)? ('hue:' hue=FLOAT)? ')'
+;
+ 
+ToTensorStep:
+    'ToTensor' '(' ')'
+;
+ 
+OneHotStep:
+    'OneHot' '(' 'numClasses:' numClasses=INT ')'
+;
+ 
+PCAStep:
+    'PCA' '(' 'components:' components=INT ')'
+;
+ 
+CustomPreprocessStep:
+    'Custom' '(' 'name:' stepName=STRING ')'
+;
+ 
+PreprocessingStep:
+    NormalizationStep
+    | StandardizationStep
+    | ResizeStep
+    | CropStep
+    | FlipStep
+    | RotationStep
+    | ColorJitterStep
+    | ToTensorStep
+    | OneHotStep
+    | PCAStep
+    | CustomPreprocessStep
+;
+ 
+PartitionStrategy:
+    'random' | 'stratified' | 'sequential' | 'kfold'
+;
+ 
+ArchitectureType:
+    'Sequential' | 'Functional' | 'Custom'
+;
+ 
+XavierMode:
+    'uniform' | 'normal'
+;
+ 
+HeMode:
+    'uniform' | 'normal'
+;
+ 
+XavierInit:
+    'Xavier' '(' ('mode:' mode=XavierMode)? ')'
+;
+ 
+HeInit:
+    'He' '(' ('mode:' mode=HeMode)? ')'
+;
+ 
+NormalInit:
+    'Normal' '(' ('mean:' mean=FLOAT)? ('std:' std=FLOAT)? ')'
+;
+ 
+UniformInit:
+    'Uniform' '(' ('low:' low=FLOAT)? ('high:' high=FLOAT)? ')'
+;
+ 
+ZerosInit:
+    'Zeros' '(' ')'
+;
+ 
+OnesInit:
+    'Ones' '(' ')'
+;
+ 
+ConstantInit:
+    'Constant' '(' 'value:' value=FLOAT ')'
+;
+ 
+PretrainedInit:
+    'Pretrained' '(' 'path:' path=STRING ')'
+;
+ 
+WeightInitSpec:
+    XavierInit | HeInit | NormalInit | UniformInit | ZerosInit | OnesInit | ConstantInit | PretrainedInit
+;
+ 
+L1Regularizer:
+    'L1' '(' 'lambda:' lambda=FLOAT ')'
+;
+ 
+L2Regularizer:
+    'L2' '(' 'lambda:' lambda=FLOAT ')'
+;
+ 
+L1L2Regularizer:
+    'L1L2' '(' 'l1:' l1=FLOAT 'l2:' l2=FLOAT ')'
+;
+ 
+RegularizerSpec:
+    L1Regularizer | L2Regularizer | L1L2Regularizer
+;
+ 
+ReLUActivation:
+    'ReLU' ('(' ('maxValue:' maxValue=FLOAT)? ')')?
+;
+ 
+LeakyReLUActivation:
+    'LeakyReLU' '(' ('alpha:' alpha=FLOAT)? ')'
+;
+ 
+PReLUActivation:
+    'PReLU' '(' ')'
+;
+ 
+ELUActivation:
+    'ELU' '(' ('alpha:' alpha=FLOAT)? ')'
+;
+ 
+SELUActivation:
+    'SELU' '(' ')'
+;
+ 
+SigmoidActivation:
+    'Sigmoid' '(' ')'
+;
+ 
+TanhActivation:
+    'Tanh' '(' ')'
+;
+ 
+SoftmaxActivation:
+    'Softmax' '(' ('axis:' axis=INT)? ')'
+;
+ 
+SoftplusActivation:
+    'Softplus' '(' ')'
+;
+ 
+SwishActivation:
+    'Swish' '(' ')'
+;
+ 
+GELUActivation:
+    'GELU' '(' ')'
+;
+ 
+LinearActivation:
+    'Linear' '(' ')'
+;
+ 
+ActivationSpec:
+    ReLUActivation
+    | LeakyReLUActivation
+    | PReLUActivation
+    | ELUActivation
+    | SELUActivation
+    | SigmoidActivation
+    | TanhActivation
+    | SoftmaxActivation
+    | SoftplusActivation
+    | SwishActivation
+    | GELUActivation
+    | LinearActivation
+;
+ 
+PaddingType:
+    'same' | 'valid' | 'causal'
+;
+ 
+PoolType:
+    'max' | 'average' | 'global_max' | 'global_average'
+;
+ 
+DropoutType:
+    'standard' | 'spatial' | 'variational'
+;
+ 
+KernelSizeSpec:
+    MultiKernel | SingleKernel
+;
+ 
+SingleKernel:
+    size=INT
+;
+ 
+MultiKernel:
+    '[' sizes+=INT[','] ']'
+;
+ 
+StrideSpec:
+    MultiStride | SingleStride
+;
+ 
+SingleStride:
+    size=INT
+;
+ 
+MultiStride:
+    '[' sizes+=INT[','] ']'
+;
+ 
+ConnectionSpec:
+    from_layer=ID '->' to_layer=ID
+;
+ 
+FloatParamValue:
+    value=FLOAT
+;
+ 
+IntParamValue:
+    value=INT
+;
+ 
+StringParamValue:
+    value=STRING
+;
+ 
+BoolParamValue:
+    value=BOOL
+;
+ 
+ParamValue:
+    FloatParamValue | IntParamValue | StringParamValue | BoolParamValue
+;
+ 
+KeyValueParam:
+    key=ID ':' value=ParamValue
+;
+ 
+DenseLayerSpec:
+    'Dense' name=ID
+    (
+        ('units:' units=INT)
+        ('activation:' activation=ActivationSpec)?
+        ('useBias:' useBias=BOOL)?
+        ('weightInit:' weightInit=WeightInitSpec)?
+        ('biasInit:' biasInit=WeightInitSpec)?
+        ('regularizer:' regularizer=RegularizerSpec)?
+    )#
+    'end'
+;
+ 
+ConvLayerSpec:
+    'Conv' name=ID
+    (
+        ('filters:' filters=INT)
+        ('kernelSize:' kernelSize=KernelSizeSpec)
+        ('stride:' stride=StrideSpec)?
+        ('padding:' padding=PaddingType)?
+        ('dilation:' dilation=INT)?
+        ('groups:' groups=INT)?
+        ('activation:' activation=ActivationSpec)?
+        ('useBias:' useBias=BOOL)?
+        ('weightInit:' weightInit=WeightInitSpec)?
+        ('regularizer:' regularizer=RegularizerSpec)?
+        ('dimensions:' dimensions=INT)?
+    )#
+    'end'
+;
+ 
+PoolingLayerSpec:
+    'Pooling' name=ID
+    (
+        ('poolType:' poolType=PoolType)
+        ('poolSize:' poolSize=INT)
+        ('stride:' stride=INT)?
+        ('padding:' padding=PaddingType)?
+        ('dimensions:' dimensions=INT)?
+    )#
+    'end'
+;
+ 
+RecurrentLayerSpec:
+    'RNN' name=ID
+    (
+        ('units:' units=INT)
+        ('activation:' activation=ActivationSpec)?
+        ('returnSequences:' returnSequences=BOOL)?
+        ('returnState:' returnState=BOOL)?
+        ('bidirectional:' bidirectional=BOOL)?
+        ('dropout:' dropout=FLOAT)?
+        ('recurrentDropout:' recurrentDropout=FLOAT)?
+    )#
+    'end'
+;
+ 
+LSTMLayerSpec:
+    'LSTM' name=ID
+    (
+        ('units:' units=INT)
+        ('activation:' activation=ActivationSpec)?
+        ('recurrentActivation:' recurrentActivation=ActivationSpec)?
+        ('returnSequences:' returnSequences=BOOL)?
+        ('returnState:' returnState=BOOL)?
+        ('bidirectional:' bidirectional=BOOL)?
+        ('dropout:' dropout=FLOAT)?
+        ('recurrentDropout:' recurrentDropout=FLOAT)?
+        ('usePeepholes:' usePeepholes=BOOL)?
+    )#
+    'end'
+;
+ 
+GRULayerSpec:
+    'GRU' name=ID
+    (
+        ('units:' units=INT)
+        ('activation:' activation=ActivationSpec)?
+        ('recurrentActivation:' recurrentActivation=ActivationSpec)?
+        ('returnSequences:' returnSequences=BOOL)?
+        ('returnState:' returnState=BOOL)?
+        ('bidirectional:' bidirectional=BOOL)?
+        ('dropout:' dropout=FLOAT)?
+        ('recurrentDropout:' recurrentDropout=FLOAT)?
+    )#
+    'end'
+;
+ 
+BatchNormLayerSpec:
+    'BatchNorm' name=ID
+    (
+        ('momentum:' momentum=FLOAT)?
+        ('epsilon:' epsilon=FLOAT)?
+        ('affine:' affine=BOOL)?
+    )#
+    'end'
+;
+ 
+DropoutLayerSpec:
+    'Dropout' name=ID
+    (
+        ('rate:' rate=FLOAT)
+        ('dropoutType:' dropoutType=DropoutType)?
+    )#
+    'end'
+;
+ 
+FlattenLayerSpec:
+    'Flatten' name=ID
+    'end'
+;
+ 
+EmbeddingLayerSpec:
+    'Embedding' name=ID
+    (
+        ('vocabSize:' vocabSize=INT)
+        ('embeddingDim:' embeddingDim=INT)
+        ('maxLength:' maxLength=INT)?
+        ('trainable:' trainable=BOOL)?
+    )#
+    'end'
+;
+ 
+AttentionLayerSpec:
+    'Attention' name=ID
+    (
+        ('numHeads:' numHeads=INT)
+        ('keyDim:' keyDim=INT)
+        ('valueDim:' valueDim=INT)?
+        ('dropout:' dropout=FLOAT)?
+    )#
+    'end'
+;
+ 
+TransformerLayerSpec:
+    'Transformer' name=ID
+    (
+        ('numHeads:' numHeads=INT)
+        ('ffDim:' ffDim=INT)
+        ('dropout:' dropout=FLOAT)?
+        ('activation:' activation=ActivationSpec)?
+    )#
+    'end'
+;
+ 
+ResidualBlockSpec:
+    'ResidualBlock' name=ID
+    (
+        ('layers:' '-' layers+=[LayerSpec]['-'])
+        ('skipConnection:' skipConnection=BOOL)?
+    )#
+    'end'
+;
+ 
+CustomLayerSpec:
+    'CustomLayer' name=ID
+    (
+        ('className:' className=STRING)
+        ('params:' '-' params+=KeyValueParam['-'])?
+    )#
+    'end'
+;
+ 
+LayerSpec:
+    DenseLayerSpec
+    | ConvLayerSpec
+    | PoolingLayerSpec
+    | RecurrentLayerSpec
+    | LSTMLayerSpec
+    | GRULayerSpec
+    | BatchNormLayerSpec
+    | DropoutLayerSpec
+    | FlattenLayerSpec
+    | EmbeddingLayerSpec
+    | AttentionLayerSpec
+    | TransformerLayerSpec
+    | ResidualBlockSpec
+    | CustomLayerSpec
+;
+ 
+ReductionType:
+    'mean' | 'sum' | 'none'
+;
+ 
+CrossEntropyLoss:
+    'CrossEntropy' '(' ('labelSmoothing:' labelSmoothing=FLOAT)? ('reduction:' reduction=ReductionType)? ')'
+;
+ 
+BinaryCrossEntropyLoss:
+    'BinaryCrossEntropy' '(' ('reduction:' reduction=ReductionType)? ')'
+;
+ 
+MSELoss:
+    'MSE' '(' ('reduction:' reduction=ReductionType)? ')'
+;
+ 
+MAELoss:
+    'MAE' '(' ('reduction:' reduction=ReductionType)? ')'
+;
+ 
+HuberLoss:
+    'Huber' '(' ('delta:' delta=FLOAT)? ('reduction:' reduction=ReductionType)? ')'
+;
+ 
+CTCLoss:
+    'CTC' '(' ('blankLabel:' blankLabel=INT)? ')'
+;
+ 
+KLDivLoss:
+    'KLDiv' '(' ('reduction:' reduction=ReductionType)? ')'
+;
+ 
+FocalLoss:
+    'Focal' '(' ('alpha:' alpha=FLOAT)? ('gamma:' gamma=FLOAT)? ')'
+;
+ 
+CustomLoss:
+    'CustomLoss' '(' 'name:' lossName=STRING ')'
+;
+ 
+LossSpec:
+    CrossEntropyLoss
+    | BinaryCrossEntropyLoss
+    | MSELoss
+    | MAELoss
+    | HuberLoss
+    | CTCLoss
+    | KLDivLoss
+    | FocalLoss
+    | CustomLoss
+;
+ 
+SGDOptimizer:
+    'SGD' '('
+    (
+        ('lr:' lr=FLOAT)
+        ('momentum:' momentum=FLOAT)?
+        ('weightDecay:' weightDecay=FLOAT)?
+        ('nesterov:' nesterov=BOOL)?
+        ('dampening:' dampening=FLOAT)?
+    )#
+    ')'
+;
+ 
+AdamOptimizer:
+    'Adam' '('
+    (
+        ('lr:' lr=FLOAT)
+        ('beta1:' beta1=FLOAT)?
+        ('beta2:' beta2=FLOAT)?
+        ('epsilon:' epsilon=FLOAT)?
+        ('weightDecay:' weightDecay=FLOAT)?
+        ('amsgrad:' amsgrad=BOOL)?
+    )#
+    ')'
+;
+ 
+AdamWOptimizer:
+    'AdamW' '('
+    (
+        ('lr:' lr=FLOAT)
+        ('beta1:' beta1=FLOAT)?
+        ('beta2:' beta2=FLOAT)?
+        ('epsilon:' epsilon=FLOAT)?
+        ('weightDecay:' weightDecay=FLOAT)?
+    )#
+    ')'
+;
+ 
+RMSpropOptimizer:
+    'RMSprop' '('
+    (
+        ('lr:' lr=FLOAT)
+        ('alpha:' alpha=FLOAT)?
+        ('epsilon:' epsilon=FLOAT)?
+        ('weightDecay:' weightDecay=FLOAT)?
+        ('momentum:' momentum=FLOAT)?
+    )#
+    ')'
+;
+ 
+AdagradOptimizer:
+    'Adagrad' '('
+    (
+        ('lr:' lr=FLOAT)
+        ('lrDecay:' lrDecay=FLOAT)?
+        ('weightDecay:' weightDecay=FLOAT)?
+        ('epsilon:' epsilon=FLOAT)?
+    )#
+    ')'
+;
+ 
+AdadeltaOptimizer:
+    'Adadelta' '('
+    (
+        ('lr:' lr=FLOAT)?
+        ('rho:' rho=FLOAT)?
+        ('epsilon:' epsilon=FLOAT)?
+        ('weightDecay:' weightDecay=FLOAT)?
+    )#
+    ')'
+;
+ 
+LBFGSOptimizer:
+    'LBFGS' '('
+    (
+        ('lr:' lr=FLOAT)?
+        ('maxIter:' maxIter=INT)?
+        ('historySize:' historySize=INT)?
+    )#
+    ')'
+;
+ 
+CustomOptimizer:
+    'CustomOptimizer' '(' 'name:' optName=STRING ')'
+;
+ 
+OptimizerSpec:
+    SGDOptimizer
+    | AdamOptimizer
+    | AdamWOptimizer
+    | RMSpropOptimizer
+    | AdagradOptimizer
+    | AdadeltaOptimizer
+    | LBFGSOptimizer
+    | CustomOptimizer
+;
+ 
+CyclicMode:
+    'triangular' | 'triangular2' | 'exp_range'
+;
+ 
+AnnealStrategy:
+    'cos' | 'linear'
+;
+ 
+PlateauMode:
+    'min' | 'max'
+;
+ 
+StepLRScheduler:
+    'StepLR' '('
+    (
+        ('stepSize:' stepSize=INT)
+        ('gamma:' gamma=FLOAT)
+        ('lastEpoch:' lastEpoch=INT)?
+    )#
+    ')'
+;
+ 
+MultiStepLRScheduler:
+    'MultiStepLR' '('
+    (
+        ('milestones:' '[' milestones+=INT[','] ']')
+        ('gamma:' gamma=FLOAT)
+    )#
+    ')'
+;
+ 
+ExponentialLRScheduler:
+    'ExponentialLR' '('
+    (
+        ('gamma:' gamma=FLOAT)
+        ('lastEpoch:' lastEpoch=INT)?
+    )#
+    ')'
+;
+ 
+CosineAnnealingScheduler:
+    'CosineAnnealing' '('
+    (
+        ('tMax:' tMax=INT)
+        ('etaMin:' etaMin=FLOAT)?
+        ('lastEpoch:' lastEpoch=INT)?
+    )#
+    ')'
+;
+ 
+CyclicLRScheduler:
+    'CyclicLR' '('
+    (
+        ('baseLr:' baseLr=FLOAT)
+        ('maxLr:' maxLr=FLOAT)
+        ('stepSizeUp:' stepSizeUp=INT)?
+        ('mode:' mode=CyclicMode)?
+        ('gamma:' gamma=FLOAT)?
+    )#
+    ')'
+;
+ 
+OneCycleLRScheduler:
+    'OneCycleLR' '('
+    (
+        ('maxLr:' maxLr=FLOAT)
+        ('totalSteps:' totalSteps=INT)?
+        ('pctStart:' pctStart=FLOAT)?
+        ('annealStrategy:' annealStrategy=AnnealStrategy)?
+    )#
+    ')'
+;
+ 
+ReduceOnPlateauScheduler:
+    'ReduceOnPlateau' '('
+    (
+        ('mode:' mode=PlateauMode)
+        ('factor:' factor=FLOAT)?
+        ('patience:' patience=INT)?
+        ('threshold:' threshold=FLOAT)?
+        ('minLr:' minLr=FLOAT)?
+    )#
+    ')'
+;
+ 
+WarmupScheduler:
+    'Warmup' '('
+    (
+        ('warmupSteps:' warmupSteps=INT)
+        ('afterScheduler:' afterScheduler=STRING)?
+    )#
+    ')'
+;
+ 
+LinearScheduler:
+    'LinearLR' '('
+    (
+        ('startFactor:' startFactor=FLOAT)?
+        ('endFactor:' endFactor=FLOAT)?
+        ('totalIters:' totalIters=INT)?
+    )#
+    ')'
+;
+ 
+PolynomialScheduler:
+    'PolynomialLR' '('
+    (
+        ('totalIters:' totalIters=INT)
+        ('power:' power=FLOAT)?
+    )#
+    ')'
+;
+ 
+CustomScheduler:
+    'CustomScheduler' '(' 'name:' schedulerName=STRING ')'
+;
+ 
+LRSchedulerSpec:
+    StepLRScheduler
+    | MultiStepLRScheduler
+    | ExponentialLRScheduler
+    | CosineAnnealingScheduler
+    | CyclicLRScheduler
+    | OneCycleLRScheduler
+    | ReduceOnPlateauScheduler
+    | WarmupScheduler
+    | LinearScheduler
+    | PolynomialScheduler
+    | CustomScheduler
+;
+ 
+BatchStrategy:
+    'standard' | 'weighted_sampling' | 'balanced' | 'curriculum'
+;
+ 
+CheckpointFrequency:
+    'every_epoch' | 'every_n_epochs' | 'best_only' | 'last_only'
+;
+ 
+CheckpointSaveMode:
+    'min' | 'max'
+;
+ 
+CheckpointSpec:
+    'Checkpoint' '('
+    (
+        ('savePath:' savePath=STRING)
+        ('saveFrequency:' saveFrequency=CheckpointFrequency)?
+        ('saveMode:' saveMode=CheckpointSaveMode)?
+        ('monitor:' monitor=STRING)?
+        ('keepTopK:' keepTopK=INT)?
+    )#
+    ')'
+;
+ 
+AverageType:
+    'micro' | 'macro' | 'weighted' | 'binary'
+;
+ 
+CurveType:
+    'ROC' | 'PR'
+;
+ 
+AccuracyMetric:
+    'Accuracy' '(' ('threshold:' threshold=FLOAT)? ')'
+;
+ 
+TopKAccuracyMetric:
+    'TopKAccuracy' '(' 'k:' k=INT ')'
+;
+ 
+PrecisionMetric:
+    'Precision' '(' ('average:' average=AverageType)? ('threshold:' threshold=FLOAT)? ')'
+;
+ 
+RecallMetric:
+    'Recall' '(' ('average:' average=AverageType)? ('threshold:' threshold=FLOAT)? ')'
+;
+ 
+F1Metric:
+    'F1' '(' ('average:' average=AverageType)? ')'
+;
+ 
+AUCMetric:
+    'AUC' '(' ('curveType:' curveType=CurveType)? ')'
+;
+ 
+MAPMetric:
+    'MAP' '(' ('iouThreshold:' iouThreshold=FLOAT)? ')'
+;
+ 
+MSEMetric:
+    'MSEMetric' '(' ')'
+;
+ 
+MAEMetric:
+    'MAEMetric' '(' ')'
+;
+ 
+R2Metric:
+    'R2' '(' ')'
+;
+ 
+BleuMetric:
+    'BLEU' '(' ('nGram:' nGram=INT)? ')'
+;
+ 
+PerplexityMetric:
+    'Perplexity' '(' ')'
+;
+ 
+IoUMetric:
+    'IoU' '(' ('numClasses:' numClasses=INT)? ')'
+;
+ 
+DiceMetric:
+    'Dice' '(' ('smooth:' smooth=FLOAT)? ')'
+;
+ 
+CustomMetric:
+    'CustomMetric' '(' 'name:' metricName=STRING ')'
+;
+ 
+MetricSpec:
+    AccuracyMetric
+    | TopKAccuracyMetric
+    | PrecisionMetric
+    | RecallMetric
+    | F1Metric
+    | AUCMetric
+    | MAPMetric
+    | MSEMetric
+    | MAEMetric
+    | R2Metric
+    | BleuMetric
+    | PerplexityMetric
+    | IoUMetric
+    | DiceMetric
+    | CustomMetric
+;
+ 
+OutputFormat:
+    'JSON' | 'CSV' | 'NPY' | 'HDF5' | 'TXT' | 'PICKLE'
+;
+ 
+ArgmaxStep:
+    'Argmax' '(' ('axis:' axis=INT)? ')'
+;
+ 
+SoftmaxPostStep:
+    'SoftmaxPost' '(' ('axis:' axis=INT)? ')'
+;
+ 
+ThresholdStep:
+    'Threshold' '(' 'value:' value=FLOAT ')'
+;
+ 
+NMSStep:
+    'NMS' '(' ('iouThreshold:' iouThreshold=FLOAT)? ('scoreThreshold:' scoreThreshold=FLOAT)? ')'
+;
+ 
+CustomPostStep:
+    'CustomPost' '(' 'name:' stepName=STRING ')'
+;
+ 
+PostProcessingStep:
+    ArgmaxStep
+    | SoftmaxPostStep
+    | ThresholdStep
+    | NMSStep
+    | CustomPostStep
+;
+ 
+PredictionOutputSpec:
+    'PredictionOutput' '('
+    (
+        ('format:' format=OutputFormat)
+        ('savePath:' savePath=STRING)?
+        ('includeConfidence:' includeConfidence=BOOL)?
+        ('topK:' topK=INT)?
+    )#
+    ')'
+;
+ 
+ModelSource:
+    'torchvision' | 'huggingface' | 'tensorflow_hub' | 'local' | 'timm'
+;
+ 
+AllFreezeStrategy:
+    'FreezeAll' '(' ')'
+;
+ 
+LayerFreezeStrategy:
+    'FreezeLayers' '(' 'layers:' '[' layers+=STRING[','] ']' ')'
+;
+ 
+PartialFreezeStrategy:
+    'FreezeUntil' '(' 'layer:' layer=STRING ')'
+;
+ 
+FreezeStrategySpec:
+    AllFreezeStrategy | LayerFreezeStrategy | PartialFreezeStrategy
+;
+ 
+HeadReplacementSpec:
+    'ReplaceHead' '('
+    (
+        ('outputUnits:' outputUnits=INT)
+        ('activation:' activation=ActivationSpec)?
+        ('layers:' '-' layers+=LayerSpec['-'])?
+    )#
+    ')'
+;
+ 
+FinetuningSpec:
+    'Finetuning' '('
+    (
+        ('unfreezeAfterEpoch:' unfreezeAfterEpoch=INT)?
+        ('unfreezeLayers:' '[' unfreezeLayers+=STRING[','] ']')?
+        ('lrMultiplier:' lrMultiplier=FLOAT)?
+    )#
+    ')'
+;
+ 
+BaseModelSpec:
+    'BaseModel' '('
+    (
+        ('name:' modelName=STRING)
+        ('source:' source=ModelSource)?
+        ('weightsPath:' weightsPath=STRING)?
+        ('includeTop:' includeTop=BOOL)?
+    )#
+    ')'
+;
+ 
+MonitorMode:
+    'min' | 'max'
+;
+ 
+MetricMonitorCriterion:
+    'MonitorMetric' '('
+    (
+        ('metric:' metric=STRING)
+        ('mode:' mode=MonitorMode)
+        ('threshold:' threshold=FLOAT)?
+        ('windowSize:' windowSize=INT)?
+    )#
+    ')'
+;
+ 
+LossMonitorCriterion:
+    'MonitorLoss' '('
+    (
+        ('mode:' mode=MonitorMode)
+        ('threshold:' threshold=FLOAT)?
+        ('windowSize:' windowSize=INT)?
+    )#
+    ')'
+;
+ 
+CustomMonitorCriterion:
+    'CustomMonitor' '(' 'name:' criterionName=STRING ')'
+;
+ 
+MonitoringCriterion:
+    MetricMonitorCriterion | LossMonitorCriterion | CustomMonitorCriterion
+;
+ 
+EarlyStoppingRule:
+    'EarlyStopping' '('
+    (
+        ('monitor:' monitor=STRING)
+        ('patience:' patience=INT)
+        ('minDelta:' minDelta=FLOAT)?
+        ('mode:' mode=MonitorMode)?
+        ('restoreBestWeights:' restoreBestWeights=BOOL)?
+        ('baselineValue:' baselineValue=FLOAT)?
+    )#
+    ')'
+;
+ 
+LogFrequency:
+    'every_step' | 'every_epoch' | 'every_n_steps'
+;
+ 
+LoggerType:
+    'tensorboard' | 'wandb' | 'mlflow' | 'csv' | 'console'
+;
+ 
+LoggingConfigSpec:
+    'LoggingConfig' '('
+    (
+        ('logDir:' logDir=STRING)?
+        ('logFrequency:' logFrequency=LogFrequency)?
+        ('loggers:' '[' loggers+=LoggerType[','] ']')?
+        ('logGradients:' logGradients=BOOL)?
+        ('logWeights:' logWeights=BOOL)?
+    )#
+    ')'
+;
+ 
+ExportFormat:
+    'ONNX' | 'TorchScript' | 'SavedModel' | 'TFLite' | 'CoreML' | 'TensorRT'
+;
+ 
+ClassificationInterpretation:
+    'ClassificationOutput' '('
+    (
+        ('classNames:' '[' classNames+=STRING[','] ']')?
+        ('topK:' topK=INT)?
+        ('includeConfidence:' includeConfidence=BOOL)?
+    )#
+    ')'
+;
+ 
+RegressionInterpretation:
+    'RegressionOutput' '('
+    (
+        ('scale:' scale=FLOAT)?
+        ('offset:' offset=FLOAT)?
+        ('units:' units=STRING)?
+    )#
+    ')'
+;
+ 
+DetectionInterpretation:
+    'DetectionOutput' '('
+    (
+        ('classNames:' '[' classNames+=STRING[','] ']')?
+        ('scoreThreshold:' scoreThreshold=FLOAT)?
+        ('iouThreshold:' iouThreshold=FLOAT)?
+        ('maxDetections:' maxDetections=INT)?
+    )#
+    ')'
+;
+ 
+CustomInterpretation:
+    'CustomInterpretation' '(' 'name:' interpretName=STRING ')'
+;
+ 
+InterpretationSpec:
+    ClassificationInterpretation | RegressionInterpretation | DetectionInterpretation | CustomInterpretation
+;
+ 
+DatasetSection:
+    'Dataset' name=ID
+    (
+        ('source:' source=DataSource)
+        ('format:' format=DataFormat)?
+        ('inputDims:' '[' inputDims+=INT[','] ']')?
+        ('dtype:' dtype=DataType)?
+        ('shuffle:' shuffle=BOOL)?
+        ('numWorkers:' numWorkers=INT)?
+        ('pinMemory:' pinMemory=BOOL)?
+    )#
+    'end'
+;
+ 
+PreprocessingSection:
+    'Preprocessing' name=ID
+    (
+        ('dataset:' dataset=[DatasetSection])
+        ('steps:' '-' steps+=PreprocessingStep['-'])
+    )#
+    'end'
+;
+ 
+PartitionSection:
+    'Partition' name=ID
+    (
+        ('dataset:' dataset=[DatasetSection])
+        ('trainRatio:' trainRatio=FLOAT)
+        ('valRatio:' valRatio=FLOAT)
+        ('testRatio:' testRatio=FLOAT)?
+        ('strategy:' strategy=PartitionStrategy)?
+        ('seed:' seed=INT)?
+        ('stratify:' stratify=BOOL)?
+    )#
+    'end'
+;
+ 
+ArchitectureSection:
+    'Architecture' name=ID
+    (
+        ('type:' archType=ArchitectureType)
+        ('inputShape:' '[' inputShape+=INT[','] ']')?
+        ('layers:' '-' layers+=LayerSpec['-'])
+        ('connections:' '-' connections+=ConnectionSpec['-'])?
+    )#
+    'end'
+;
+ 
+TrainingSection:
+    'Training' name=ID
+    (
+        ('architecture:' architecture=[ArchitectureSection])
+        ('partition:' partition=[PartitionSection])
+        ('loss:' loss=LossSpec)
+        ('optimizer:' optimizer=OptimizerSpec)
+        ('lrScheduler:' lrScheduler=LRSchedulerSpec)?
+        ('batchSize:' batchSize=INT)
+        ('epochs:' epochs=INT)
+        ('batchStrategy:' batchStrategy=BatchStrategy)?
+        ('checkpointing:' checkpointing=CheckpointSpec)?
+        ('mixedPrecision:' mixedPrecision=BOOL)?
+        ('gradientClipping:' gradientClipping=FLOAT)?
+        ('gradientAccumulation:' gradientAccumulation=INT)?
+        ('seed:' seed=INT)?
+    )#
+    'end'
+;
+ 
+EvaluationSection:
+    'Evaluation' name=ID
+    (
+        ('architecture:' architecture=[ArchitectureSection])
+        ('partition:' partition=[PartitionSection])?
+        ('metrics:' '-' metrics+=MetricSpec['-'])
+        ('predictionOutput:' predictionOutput=PredictionOutputSpec)?
+        ('postProcessing:' '-' postProcessing+=PostProcessingStep['-'])?
+    )#
+    'end'
+;
+ 
+TransferLearningSection:
+    'TransferLearning' name=ID
+    (
+        ('baseModel:' baseModel=BaseModelSpec)
+        ('freezeStrategy:' freezeStrategy=FreezeStrategySpec)?
+        ('headReplacement:' headReplacement=HeadReplacementSpec)?
+        ('finetuning:' finetuning=FinetuningSpec)?
+    )#
+    'end'
+;
+ 
+MonitoringSection:
+    'Monitoring' name=ID
+    (
+        ('training:' training=[TrainingSection])
+        ('criteria:' '-' criteria+=MonitoringCriterion['-'])
+        ('earlyStoppingRules:' '-' earlyStoppingRules+=EarlyStoppingRule['-'])?
+        ('loggingConfig:' loggingConfig=LoggingConfigSpec)?
+    )#
+    'end'
+;
+ 
+OutputSection:
+    'Output' name=ID
+    (
+        ('format:' format=OutputFormat)
+        ('savePath:' savePath=STRING)
+        ('postProcessing:' '-' postProcessing+=PostProcessingStep['-'])?
+        ('interpretation:' interpretation=InterpretationSpec)?
+        ('exportFormat:' exportFormat=ExportFormat)?
+    )#
+    'end'
+;
+ 
+Section:
+    DatasetSection
+    | PreprocessingSection
+    | PartitionSection
+    | ArchitectureSection
+    | TrainingSection
+    | EvaluationSection
+    | TransferLearningSection
+    | MonitoringSection
+    | OutputSection
+;

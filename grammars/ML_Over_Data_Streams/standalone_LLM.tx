@@ -1,0 +1,695 @@
+MLOverDataStreamsLLMModel:
+    imports*=Import
+    (
+        (streams*=StreamDeclaration)
+        (schemas*=SchemaDefinition)
+        (timeSemantics*=TimeSemanticDeclaration)
+        (schemaEvolutions*=SchemaEvolutionPolicy)
+        (windows*=WindowDefinition)
+        (watermarks*=WatermarkPolicy)
+        (aggregations*=StatefulAggregation)
+        (features*=FeatureDefinition)
+        (models*=OnlineModelDeclaration)
+        (pipelines*=PipelineDefinition)
+        (inferences*=InferenceDeclaration)
+        (metrics*=MetricDefinition)
+        (driftDetectors*=DriftDetectorDeclaration)
+        (retrainingPolicies*=RetrainingPolicy)
+    )#
+;
+ 
+Import:
+    'import' importURI=FQN ('as' name=ID)?
+;
+ 
+FQN:
+    ID ('.' ID)*
+;
+ 
+KeyValuePair:
+    key=STRING ':' value=STRING
+;
+ 
+DurationLiteral:
+    value=NUMBER unit=TimeUnit
+;
+ 
+TimeUnit:
+    'ms' | 'sec' | 'min' | 'hour' | 'day' | 'week'
+;
+ 
+ComparisonOperator:
+    'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'neq'
+;
+ 
+ArrivalMode:
+    'continuous' | 'bursty'
+;
+ 
+KafkaOffset:
+    'earliest' | 'latest' | 'none'
+;
+ 
+HTTPMethod:
+    'GET' | 'POST'
+;
+ 
+DataFormat:
+    'json' | 'avro' | 'parquet' | 'csv' | 'protobuf' | 'orc'
+;
+ 
+WriteMode:
+    'append' | 'upsert' | 'overwrite'
+;
+ 
+TimeType:
+    'event_time' | 'processing_time' | 'ingestion_time'
+;
+ 
+CompatibilityMode:
+    'backward' | 'forward' | 'full' | 'none'
+;
+ 
+IncompatibleAction:
+    'fail' | 'skip' | 'coerce' | 'log'
+;
+ 
+WindowType:
+    'tumbling' | 'sliding' | 'session' | 'global'
+;
+ 
+WindowAlignment:
+    'epoch' | 'calendar' | 'custom'
+;
+ 
+LateEventAction:
+    'drop' | 'include' | 'sideOutput' | 'reprocess'
+;
+ 
+AggFunction:
+    'count' | 'sum' | 'avg' | 'min' | 'max' | 'stddev' | 'variance' | 'first' | 'last' | 'collect'
+;
+ 
+StateScope:
+    'per_key' | 'global' | 'per_partition'
+;
+ 
+StateUpdateRule:
+    'append' | 'replace' | 'merge' | 'accumulate'
+;
+ 
+TransformFunction:
+    'log' | 'sqrt' | 'abs' | 'normalize' | 'scale' | 'encode' | 'hash' | 'bucketize' | 'lag' | 'diff' | 'cumsum'
+;
+ 
+MLAlgorithm:
+    'SGD' | 'AdaptiveRandomForest' | 'HoeffdingTree' | 'KNN' | 'NaiveBayes' | 'Perceptron' | 'LSTM' | 'GRU' | 'LinearRegression' | 'LogisticRegression' | 'custom'
+;
+ 
+MLTaskType:
+    'classification' | 'regression' | 'clustering' | 'anomaly_detection' | 'forecasting'
+;
+ 
+MetricType:
+    'accuracy' | 'precision' | 'recall' | 'f1' | 'auc' | 'rmse' | 'mae' | 'mse' | 'logloss' | 'custom'
+;
+ 
+MetricUpdateScope:
+    'perPrediction' | 'perWindow' | 'perBatch'
+;
+ 
+TemporalAggregation:
+    'rolling' | 'cumulative' | 'windowed'
+;
+ 
+DriftType:
+    'data_drift' | 'concept_drift' | 'prediction_drift' | 'feature_drift' | 'label_drift'
+;
+ 
+DriftDetectionMethod:
+    'ADWIN' | 'DDM' | 'EDDM' | 'PageHinkley' | 'KS_test' | 'PSI' | 'JS_divergence' | 'chi_square' | 'custom'
+;
+ 
+DriftSeverity:
+    'low' | 'medium' | 'high' | 'critical'
+;
+ 
+RetrainingStrategy:
+    'fullRetrain' | 'incrementalUpdate' | 'warmStart' | 'transferLearning'
+;
+ 
+VolumeUnit:
+    'events' | 'records' | 'bytes' | 'kilobytes' | 'megabytes'
+;
+ 
+PrimitiveTypeName:
+    'int' | 'float' | 'double' | 'string' | 'bool' | 'long' | 'bytes' | 'timestamp' | 'date' | 'time'
+;
+ 
+AuthPlain:
+    'Plain' '{'
+    ('username:' username=STRING)
+    ('password:' password=STRING)
+    '}'
+;
+ 
+AuthApiKey:
+    'ApiKey' '{'
+    ('key:' key=STRING)
+    '}'
+;
+ 
+AuthCert:
+    'Cert' '{'
+    (('certPath:' certPath=STRING) | ('cert:' cert=STRING))
+    '}'
+;
+ 
+ConnectionAuth:
+    AuthPlain | AuthApiKey | AuthCert
+;
+ 
+KafkaConnection:
+    'Kafka' '{'
+    (
+        ('brokers:' brokers=STRING)
+        ('topic:' topic=STRING)
+        ('groupId:' groupId=STRING)?
+        ('offset:' offset=KafkaOffset)?
+        ('ssl:' ssl=BOOL)?
+        ('auth:' auth=ConnectionAuth)?
+    )#
+    '}'
+;
+ 
+KinesisConnection:
+    'Kinesis' '{'
+    (
+        ('streamName:' streamName=STRING)
+        ('region:' region=STRING)
+        ('shardIteratorType:' shardIteratorType=STRING)?
+        ('auth:' auth=ConnectionAuth)?
+    )#
+    '}'
+;
+ 
+MQTTConnection:
+    'MQTT' '{'
+    (
+        ('host:' host=STRING)
+        ('port:' port=INT)
+        ('topic:' topic=STRING)
+        ('qos:' qos=INT)?
+        ('ssl:' ssl=BOOL)?
+        ('auth:' auth=ConnectionAuth)?
+    )#
+    '}'
+;
+ 
+HTTPStreamConnection:
+    'HTTPStream' '{'
+    (
+        ('url:' url=STRING)
+        ('method:' method=HTTPMethod)?
+        ('headers:' '[' headers+=KeyValuePair[','] ']')?
+        ('auth:' auth=ConnectionAuth)?
+    )#
+    '}'
+;
+ 
+FileStreamConnection:
+    'FileStream' '{'
+    (
+        ('path:' path=STRING)
+        ('format:' format=DataFormat)
+        ('watch:' watch=BOOL)?
+    )#
+    '}'
+;
+ 
+GenericConnection:
+    'Generic' '{'
+    (
+        ('type:' type=STRING)
+        ('params:' '[' params+=KeyValuePair[','] ']')
+    )#
+    '}'
+;
+ 
+ConnectionParams:
+    KafkaConnection | KinesisConnection | MQTTConnection | HTTPStreamConnection | FileStreamConnection | GenericConnection
+;
+ 
+StreamDeclaration:
+    'Stream' name=ID
+    (
+        ('arrivalMode:' arrivalMode=ArrivalMode)
+        ('schema:' schema=[SchemaDefinition])
+        ('connection:' connection=ConnectionParams)
+        ('timeSemantics:' timeSemantics=[TimeSemanticDeclaration])?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+InlineFieldDef:
+    name=ID ':' typeName=PrimitiveTypeName
+;
+ 
+ArrayFieldType:
+    'array' '<' elementType=PrimitiveTypeName '>'
+;
+ 
+MapFieldType:
+    'map' '<' keyType=PrimitiveTypeName ',' valueType=PrimitiveTypeName '>'
+;
+ 
+StructFieldType:
+    'struct' '{' fields+=InlineFieldDef[','] '}'
+;
+ 
+PrimitiveFieldType:
+    typeName=PrimitiveTypeName
+;
+ 
+ComplexFieldType:
+    ArrayFieldType | MapFieldType | StructFieldType
+;
+ 
+FieldType:
+    ComplexFieldType | PrimitiveFieldType
+;
+ 
+StringDefault:
+    value=STRING
+;
+ 
+NumberDefault:
+    value=NUMBER
+;
+ 
+BoolDefault:
+    value=BOOL
+;
+ 
+DefaultValue:
+    NumberDefault | BoolDefault | StringDefault
+;
+ 
+FieldDefinition:
+    name=ID ':' fieldType=FieldType
+    (
+        ('optional:' optional=BOOL)?
+        ('default:' default=DefaultValue)?
+        ('description:' description=STRING)?
+    )#
+;
+ 
+SchemaDefinition:
+    'Schema' name=ID
+    (
+        ('fields:' '-' fields+=FieldDefinition['-'])
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+BoundedOutOfOrderWatermark:
+    'BoundedOutOfOrder' '{'
+    ('maxDelay:' maxDelay=DurationLiteral)
+    '}'
+;
+ 
+MonotonicWatermark:
+    'Monotonic' '{' '}'
+;
+ 
+CustomWatermark:
+    'Custom' '{'
+    ('expression:' expression=STRING)
+    '}'
+;
+ 
+WatermarkStrategy:
+    BoundedOutOfOrderWatermark | MonotonicWatermark | CustomWatermark
+;
+ 
+TimeSemanticDeclaration:
+    'TimeSemantics' name=ID
+    (
+        ('timeField:' timeField=STRING)
+        ('timeType:' timeType=TimeType)
+        ('watermarkStrategy:' watermarkStrategy=WatermarkStrategy)?
+        ('timezone:' timezone=STRING)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+SchemaEvolutionPolicy:
+    'SchemaEvolution' name=ID
+    (
+        ('allowAdditions:' allowAdditions=BOOL)?
+        ('allowRemovals:' allowRemovals=BOOL)?
+        ('allowTypeChanges:' allowTypeChanges=BOOL)?
+        ('compatibilityMode:' compatibilityMode=CompatibilityMode)?
+        ('onIncompatible:' onIncompatible=IncompatibleAction)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+WindowDefinition:
+    'Window' name=ID
+    (
+        ('windowType:' windowType=WindowType)
+        ('size:' size=DurationLiteral)
+        ('advance:' advance=DurationLiteral)?
+        ('alignment:' alignment=WindowAlignment)?
+        ('timeSemantics:' timeSemantics=[TimeSemanticDeclaration])?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+WatermarkPolicy:
+    'WatermarkPolicy' name=ID
+    (
+        ('maxLateness:' maxLateness=DurationLiteral)
+        ('lateEventAction:' lateEventAction=LateEventAction)
+        ('sideOutputTag:' sideOutputTag=STRING)?
+        ('allowedLateness:' allowedLateness=DurationLiteral)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+AggregationExpression:
+    outputField=ID '=' aggFunction=AggFunction '(' inputField=STRING ')'
+;
+ 
+StatefulAggregation:
+    'Aggregation' name=ID
+    (
+        ('stream:' stream=[StreamDeclaration])
+        ('groupBy:' '[' groupByFields+=STRING[','] ']')?
+        ('window:' window=[WindowDefinition])?
+        ('watermarkPolicy:' watermarkPolicy=[WatermarkPolicy])?
+        ('aggregations:' '-' aggs+=AggregationExpression['-'])
+        ('stateScope:' stateScope=StateScope)?
+        ('stateExpiry:' stateExpiry=DurationLiteral)?
+        ('stateUpdateRule:' stateUpdateRule=StateUpdateRule)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+StringFeatureExpr:
+    expr=STRING
+;
+ 
+TransformFeatureExpr:
+    transform=TransformFunction '(' args+=STRING[','] ')'
+;
+ 
+FeatureExpression:
+    TransformFeatureExpr | StringFeatureExpr
+;
+ 
+FeatureComputation:
+    outputField=ID '=' expression=FeatureExpression
+;
+ 
+EventTrigger:
+    'onEvent' '{' '}'
+;
+ 
+TimeTrigger:
+    'onInterval' '{'
+    ('interval:' interval=DurationLiteral)
+    '}'
+;
+ 
+WindowTrigger:
+    'onWindowClose' '{'
+    ('window:' window=[WindowDefinition])
+    '}'
+;
+ 
+UpdateTrigger:
+    EventTrigger | TimeTrigger | WindowTrigger
+;
+ 
+FeatureDefinition:
+    'Feature' name=ID
+    (
+        ('inputStreams:' '[' inputStreams+=[StreamDeclaration][','] ']')
+        ('inputAggregations:' '[' inputAggregations+=[StatefulAggregation][','] ']')?
+        ('computations:' '-' computations+=FeatureComputation['-'])
+        ('outputSchema:' outputSchema=[SchemaDefinition])?
+        ('updateTrigger:' updateTrigger=UpdateTrigger)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+PerEventUpdate:
+    'perEvent' '{' '}'
+;
+ 
+PerBatchUpdate:
+    'perBatch' '{'
+    ('batchSize:' batchSize=INT)
+    '}'
+;
+ 
+PerWindowUpdate:
+    'perWindow' '{'
+    ('window:' window=[WindowDefinition])
+    '}'
+;
+ 
+UpdateFrequency:
+    PerEventUpdate | PerBatchUpdate | PerWindowUpdate
+;
+ 
+OnlineModelDeclaration:
+    'OnlineModel' name=ID
+    (
+        ('algorithm:' algorithm=MLAlgorithm)
+        ('inputFeatures:' '[' inputFeatures+=[FeatureDefinition][','] ']')
+        ('targetField:' targetField=STRING)
+        ('updateFrequency:' updateFrequency=UpdateFrequency)
+        ('hyperparameters:' '[' hyperparameters+=KeyValuePair[','] ']')?
+        ('initialModel:' initialModel=STRING)?
+        ('taskType:' taskType=MLTaskType)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+AlwaysEmit:
+    'always' '{' '}'
+;
+ 
+ThresholdEmit:
+    'whenConfidence' '{'
+    ('threshold:' threshold=NUMBER)
+    '}'
+;
+ 
+WindowEmit:
+    'perWindowClose' '{'
+    ('window:' window=[WindowDefinition])
+    '}'
+;
+ 
+EmitCondition:
+    AlwaysEmit | ThresholdEmit | WindowEmit
+;
+ 
+KafkaSink:
+    'KafkaSink' '{'
+    (
+        ('brokers:' brokers=STRING)
+        ('topic:' topic=STRING)
+        ('format:' format=DataFormat)?
+    )#
+    '}'
+;
+ 
+FileSink:
+    'FileSink' '{'
+    (
+        ('path:' path=STRING)
+        ('format:' format=DataFormat)
+        ('rollover:' rollover=DurationLiteral)?
+    )#
+    '}'
+;
+ 
+DatabaseSink:
+    'DatabaseSink' '{'
+    (
+        ('connectionString:' connectionString=STRING)
+        ('table:' table=STRING)
+        ('writeMode:' writeMode=WriteMode)?
+    )#
+    '}'
+;
+ 
+RESTSink:
+    'RESTSink' '{'
+    (
+        ('url:' url=STRING)
+        ('method:' method=HTTPMethod)
+        ('headers:' '[' headers+=KeyValuePair[','] ']')?
+    )#
+    '}'
+;
+ 
+ConsoleSink:
+    'ConsoleSink' '{' '}'
+;
+ 
+OutputSink:
+    KafkaSink | FileSink | DatabaseSink | RESTSink | ConsoleSink
+;
+ 
+InferenceDeclaration:
+    'Inference' name=ID
+    (
+        ('model:' model=[OnlineModelDeclaration])
+        ('inputStream:' inputStream=[StreamDeclaration])
+        ('inputFeatures:' '[' inputFeatures+=[FeatureDefinition][','] ']')
+        ('emitCondition:' emitCondition=EmitCondition)?
+        ('outputSink:' outputSink=OutputSink)?
+        ('predictionField:' predictionField=STRING)?
+        ('confidenceField:' confidenceField=STRING)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+MetricDefinition:
+    'Metric' name=ID
+    (
+        ('metricType:' metricType=MetricType)
+        ('inference:' inference=[InferenceDeclaration])?
+        ('outcomeStream:' outcomeStream=[StreamDeclaration])?
+        ('outcomeField:' outcomeField=STRING)?
+        ('predictionField:' predictionField=STRING)?
+        ('window:' window=[WindowDefinition])?
+        ('updateScope:' updateScope=MetricUpdateScope)?
+        ('temporalAggregation:' temporalAggregation=TemporalAggregation)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+AlertCondition:
+    'sustained' '{'
+    ('duration:' duration=DurationLiteral)
+    ('severity:' severity=DriftSeverity)?
+    '}'
+    | 'immediate' '{'
+    ('severity:' severity=DriftSeverity)?
+    '}'
+;
+ 
+DriftDetectorDeclaration:
+    'DriftDetector' name=ID
+    (
+        ('driftType:' driftType=DriftType)
+        ('monitoredStream:' monitoredStream=[StreamDeclaration])?
+        ('monitoredMetric:' monitoredMetric=[MetricDefinition])?
+        ('monitoredFeature:' monitoredFeature=[FeatureDefinition])?
+        ('detectionMethod:' detectionMethod=DriftDetectionMethod)
+        ('window:' window=[WindowDefinition])?
+        ('sensitivity:' sensitivity=NUMBER)?
+        ('threshold:' threshold=NUMBER)?
+        ('referenceWindow:' referenceWindow=[WindowDefinition])?
+        ('alertCondition:' alertCondition=AlertCondition)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+DataVolumeTrigger:
+    'dataVolume' '{'
+    ('threshold:' threshold=INT)
+    ('unit:' unit=VolumeUnit)?
+    '}'
+;
+ 
+MetricDegradationTrigger:
+    'metricDegradation' '{'
+    ('metric:' metric=[MetricDefinition])
+    ('threshold:' threshold=NUMBER)
+    ('operator:' operator=ComparisonOperator)
+    ('sustainedFor:' sustainedFor=DurationLiteral)?
+    '}'
+;
+ 
+DriftTrigger:
+    'driftSignal' '{'
+    ('detector:' detector=[DriftDetectorDeclaration])
+    ('severity:' severity=DriftSeverity)?
+    ('sustainedFor:' sustainedFor=DurationLiteral)?
+    '}'
+;
+ 
+ScheduleTrigger:
+    'schedule' '{'
+    ('interval:' interval=DurationLiteral)
+    '}'
+;
+ 
+RetrainingTrigger:
+    DataVolumeTrigger | MetricDegradationTrigger | DriftTrigger | ScheduleTrigger
+;
+ 
+RetrainingPolicy:
+    'RetrainingPolicy' name=ID
+    (
+        ('model:' model=[OnlineModelDeclaration])
+        ('triggers:' '-' triggers+=RetrainingTrigger['-'])
+        ('retrainingStrategy:' retrainingStrategy=RetrainingStrategy)?
+        ('cooldownPeriod:' cooldownPeriod=DurationLiteral)?
+        ('maxRetrainingFrequency:' maxRetrainingFrequency=DurationLiteral)?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+PipelineDefinition:
+    'Pipeline' name=ID
+    (
+        ('streams:' '[' streams+=[StreamDeclaration][','] ']')
+        ('schemas:' '[' schemas+=[SchemaDefinition][','] ']')?
+        ('timeSemantics:' '[' timeSemantics+=[TimeSemanticDeclaration][','] ']')?
+        ('windows:' '[' windows+=[WindowDefinition][','] ']')?
+        ('aggregations:' '[' aggregations+=[StatefulAggregation][','] ']')?
+        ('features:' '[' features+=[FeatureDefinition][','] ']')
+        ('models:' '[' models+=[OnlineModelDeclaration][','] ']')
+        ('inferences:' '[' inferences+=[InferenceDeclaration][','] ']')
+        ('metrics:' '[' metrics+=[MetricDefinition][','] ']')?
+        ('driftDetectors:' '[' driftDetectors+=[DriftDetectorDeclaration][','] ']')?
+        ('retrainingPolicies:' '[' retrainingPolicies+=[RetrainingPolicy][','] ']')?
+        ('outputs:' '[' outputs+=OutputSink[','] ']')?
+        ('description:' description=STRING)?
+    )#
+    'end'
+;
+ 
+Comment:
+    CommentLine | CommentBlock
+;
+ 
+CommentLine:
+    /\/\/.*?$/
+;
+ 
+CommentBlock:
+    /\/\*(.|\n)*?\*\//
+;
