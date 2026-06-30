@@ -1,0 +1,128 @@
+{
+    "documentType": "MCP server configuration and tool catalog",
+    "paper": {
+        "title": "Knowledge Graph-Grounded Functional Requirements Generation for Domain-Specific Languages via Repository Mining",
+        "section": "3.3.1 MCP Server",
+        "description": "The MCP server exposes a repository-mined Neo4j knowledge graph through three structured query tools. The tools retrieve frequent concepts, dominant concept relationships, and multi-level concept neighborhoods for grounding DSL functional-requirements generation."
+    },
+    "mcpServers": {
+        "neo4j-graph-server": {
+            "command": "${PYTHON_EXECUTABLE}",
+            "args": [
+                "${PROJECT_ROOT}/mcp/mcp_server.py"
+            ]
+        }
+    },
+    "serverMetadata": {
+        "name": "neo4j-graph-server",
+        "transport": "stdio",
+        "implementation": "FastMCP",
+        "knowledgeGraph": {
+            "backend": "Neo4j",
+            "uri": "${NEO4J_URI}",
+            "database": "${NEO4J_DATABASE}"
+        },
+        "toolDiscovery": "Tool definitions are exposed at runtime through the MCP tools/list operation."
+    },
+    "tools": [
+        {
+            "name": "neo4j_top_concepts",
+            "description": "Return the most frequently occurring concepts in the Knowledge Graph, ordered by occurrence count in descending order.",
+            "paperPurpose": "Surfaces the concepts that appear most persistently across the analyzed repositories. It is most appropriate when the target DSL addresses a dominant domain in the Knowledge Graph.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "default": 1000,
+                        "minimum": 1,
+                        "maximum": 2000,
+                        "description": "Maximum number of concept nodes to return. The server clamps the value to the range 1 through 2000."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "result": {
+                "description": "An object containing the requested limit and a nodes array ordered by count in descending order.",
+                "fields": {
+                    "nodes": "Array of objects with concept and count fields.",
+                    "limit": "The server-normalized result limit."
+                }
+            }
+        },
+        {
+            "name": "neo4j_top_related_concepts",
+            "description": "Return the most dominant RELATED_TO concept pairs in the Knowledge Graph, ordered by final relationship weight in descending order.",
+            "paperPurpose": "Surfaces the concept associations that appear most persistently across the analyzed repositories. It is most appropriate when the target DSL addresses a dominant domain in the Knowledge Graph.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "default": 1000,
+                        "minimum": 1,
+                        "maximum": 2000,
+                        "description": "Maximum number of concept relationships to return. The server clamps the value to the range 1 through 2000."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "result": {
+                "description": "An object containing the requested limit and an edges array ordered by relationship weight in descending order.",
+                "fields": {
+                    "edges": "Array of objects with source, target, weight, and count fields.",
+                    "limit": "The server-normalized result limit."
+                }
+            }
+        },
+        {
+            "name": "neo4j_neighbors_for_domain",
+            "description": "Return a multi-level neighborhood for a given concept in the Neo4j Knowledge Graph. The search proceeds level by level, using the neighbors found at one level as the starting concepts for the next level.",
+            "paperPurpose": "Retrieves grounded knowledge for any domain represented in the Knowledge Graph. For compound domain names, the tool can be invoked separately for the abbreviation and each constituent concept.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "domain_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Required seed concept name from which the neighborhood search begins. Concept names used by the requirements-generation prompt are lowercase."
+                    },
+                    "max_level": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 1,
+                        "description": "Number of neighborhood levels to explore. Level 1 returns direct neighbors; larger values recursively explore the concepts found in the preceding level."
+                    },
+                    "per_level_limit": {
+                        "type": "integer",
+                        "default": 100,
+                        "minimum": 1,
+                        "maximum": 500,
+                        "description": "Maximum number of direct neighbors retrieved for each seed concept at each level."
+                    },
+                    "global_limit": {
+                        "type": "integer",
+                        "default": 1000,
+                        "minimum": 1,
+                        "maximum": 5000,
+                        "description": "Maximum total number of concept-neighbor relationships returned across all levels."
+                    }
+                },
+                "required": [
+                    "domain_name"
+                ],
+                "additionalProperties": false
+            },
+            "result": {
+                "description": "An object containing the effective search arguments and a neighbors array. Results are sorted by level ascending and, within each level, by final relationship weight descending.",
+                "fields": {
+                    "domain_name": "The root concept supplied by the caller.",
+                    "max_level": "The requested search depth.",
+                    "per_level_limit": "The requested per-seed neighbor limit.",
+                    "global_limit": "The requested total result limit.",
+                    "neighbors": "Array of objects with domain_name, neighbor, level, and final_weight fields."
+                }
+            }
+        }
+    ]
+}
