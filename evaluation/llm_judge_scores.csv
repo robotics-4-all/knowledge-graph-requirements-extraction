@@ -1,0 +1,85 @@
+DSL,Axis,Judge,Methodology_Score,Standalone_Score
+Deep Learning,Completeness,Claude,8,6
+Deep Learning,Appropriateness,Claude,9,7
+Deep Learning,Comprehensibility,Claude,6,8
+Deep Learning,Correctness,Claude,9,6
+Deep Learning,Compatibility,Claude,9,7
+Deep Learning,Mind-to-program mapping,Claude,8,6
+Deep Learning,Orthogonality,Claude,8,5
+Deep Learning,Completeness,Qwen,9,6
+Deep Learning,Appropriateness,Qwen,8,7
+Deep Learning,Comprehensibility,Qwen,7,8
+Deep Learning,Correctness,Qwen,8,6
+Deep Learning,Compatibility,Qwen,5,8
+Deep Learning,Mind-to-program mapping,Qwen,7,8
+Deep Learning,Orthogonality,Qwen,6,7
+Deep Learning,Completeness,DeepSeek,8,7
+Deep Learning,Appropriateness,DeepSeek,9,6
+Deep Learning,Comprehensibility,DeepSeek,8,6
+Deep Learning,Correctness,DeepSeek,9,5
+Deep Learning,Compatibility,DeepSeek,8,7
+Deep Learning,Mind-to-program mapping,DeepSeek,9,6
+Deep Learning,Orthogonality,DeepSeek,8,5
+Deep Learning,Completeness,Gemini,9,8
+Deep Learning,Appropriateness,Gemini,9,7
+Deep Learning,Comprehensibility,Gemini,9,8
+Deep Learning,Correctness,Gemini,9,5
+Deep Learning,Compatibility,Gemini,9,7
+Deep Learning,Mind-to-program mapping,Gemini,9,7
+Deep Learning,Orthogonality,Gemini,9,6
+ML over Data Streams,Completeness,Claude,9,7
+ML over Data Streams,Appropriateness,Claude,9,7
+ML over Data Streams,Comprehensibility,Claude,5,8
+ML over Data Streams,Correctness,Claude,9,6
+ML over Data Streams,Compatibility,Claude,9,7
+ML over Data Streams,Mind-to-program mapping,Claude,7,7
+ML over Data Streams,Orthogonality,Claude,9,6
+ML over Data Streams,Completeness,Qwen,10,8
+ML over Data Streams,Appropriateness,Qwen,10,7
+ML over Data Streams,Comprehensibility,Qwen,6,9
+ML over Data Streams,Correctness,Qwen,9,7
+ML over Data Streams,Compatibility,Qwen,8,6
+ML over Data Streams,Mind-to-program mapping,Qwen,7,8
+ML over Data Streams,Orthogonality,Qwen,8,7
+ML over Data Streams,Completeness,DeepSeek,9,5
+ML over Data Streams,Appropriateness,DeepSeek,8,6
+ML over Data Streams,Comprehensibility,DeepSeek,7,5
+ML over Data Streams,Correctness,DeepSeek,8,5
+ML over Data Streams,Compatibility,DeepSeek,7,6
+ML over Data Streams,Mind-to-program mapping,DeepSeek,8,4
+ML over Data Streams,Orthogonality,DeepSeek,7,5
+ML over Data Streams,Completeness,Gemini,8,8
+ML over Data Streams,Appropriateness,Gemini,8,9
+ML over Data Streams,Comprehensibility,Gemini,7,9
+ML over Data Streams,Correctness,Gemini,6,9
+ML over Data Streams,Compatibility,Gemini,7,9
+ML over Data Streams,Mind-to-program mapping,Gemini,8,7
+ML over Data Streams,Orthogonality,Gemini,7,9
+NLP Pipelines and ML,Completeness,Claude,8,7
+NLP Pipelines and ML,Appropriateness,Claude,9,6
+NLP Pipelines and ML,Comprehensibility,Claude,5,8
+NLP Pipelines and ML,Correctness,Claude,9,6
+NLP Pipelines and ML,Compatibility,Claude,9,7
+NLP Pipelines and ML,Mind-to-program mapping,Claude,8,6
+NLP Pipelines and ML,Orthogonality,Claude,9,6
+NLP Pipelines and ML,Completeness,Qwen,9,7
+NLP Pipelines and ML,Appropriateness,Qwen,8,9
+NLP Pipelines and ML,Comprehensibility,Qwen,6,8
+NLP Pipelines and ML,Correctness,Qwen,9,8
+NLP Pipelines and ML,Compatibility,Qwen,7,9
+NLP Pipelines and ML,Mind-to-program mapping,Qwen,7,9
+NLP Pipelines and ML,Orthogonality,Qwen,8,9
+NLP Pipelines and ML,Completeness,DeepSeek,9,7
+NLP Pipelines and ML,Appropriateness,DeepSeek,8,7
+NLP Pipelines and ML,Comprehensibility,DeepSeek,8,8
+NLP Pipelines and ML,Correctness,DeepSeek,9,8
+NLP Pipelines and ML,Compatibility,DeepSeek,9,6
+NLP Pipelines and ML,Mind-to-program mapping,DeepSeek,8,7
+NLP Pipelines and ML,Orthogonality,DeepSeek,8,6
+NLP Pipelines and ML,Completeness,Gemini,9,7
+NLP Pipelines and ML,Appropriateness,Gemini,9,8
+NLP Pipelines and ML,Comprehensibility,Gemini,8,9
+NLP Pipelines and ML,Correctness,Gemini,9,8
+NLP Pipelines and ML,Compatibility,Gemini,9,7
+NLP Pipelines and ML,Mind-to-program mapping,Gemini,7,9
+NLP Pipelines and ML,Orthogonality,Gemini,8,7

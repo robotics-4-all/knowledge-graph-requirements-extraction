@@ -1,0 +1,64 @@
+DSL,Run,Axis,Grammar_A_Score,Grammar_B_Score
+Deep Learning,1,Completeness,9,6
+Deep Learning,1,Appropriateness,8,7
+Deep Learning,1,Comprehensibility,6,8
+Deep Learning,1,Correctness,8,4
+Deep Learning,1,Compatibility,9,6
+Deep Learning,1,Mind-to-program mapping,8,5
+Deep Learning,1,Orthogonality,7,4
+Deep Learning,2,Completeness,9,7
+Deep Learning,2,Appropriateness,8,6
+Deep Learning,2,Comprehensibility,7,8
+Deep Learning,2,Correctness,8,6
+Deep Learning,2,Compatibility,8,7
+Deep Learning,2,Mind-to-program mapping,8,7
+Deep Learning,2,Orthogonality,7,6
+Deep Learning,3,Completeness,8,8
+Deep Learning,3,Appropriateness,9,5
+Deep Learning,3,Comprehensibility,7,8
+Deep Learning,3,Correctness,8,6
+Deep Learning,3,Compatibility,7,7
+Deep Learning,3,Mind-to-program mapping,8,6
+Deep Learning,3,Orthogonality,9,4
+ML over Data Streams,1,Completeness,9,7
+ML over Data Streams,1,Appropriateness,9,7
+ML over Data Streams,1,Comprehensibility,5,8
+ML over Data Streams,1,Correctness,9,6
+ML over Data Streams,1,Compatibility,9,7
+ML over Data Streams,1,Mind-to-program mapping,7,7
+ML over Data Streams,1,Orthogonality,9,6
+ML over Data Streams,2,Completeness,8,7
+ML over Data Streams,2,Appropriateness,8,7
+ML over Data Streams,2,Comprehensibility,7,6
+ML over Data Streams,2,Correctness,7,6
+ML over Data Streams,2,Compatibility,7,7
+ML over Data Streams,2,Mind-to-program mapping,8,6
+ML over Data Streams,2,Orthogonality,7,5
+ML over Data Streams,3,Completeness,9,7
+ML over Data Streams,3,Appropriateness,9,7
+ML over Data Streams,3,Comprehensibility,5,8
+ML over Data Streams,3,Correctness,9,6
+ML over Data Streams,3,Compatibility,9,7
+ML over Data Streams,3,Mind-to-program mapping,7,7
+ML over Data Streams,3,Orthogonality,9,6
+NLP Pipelines and ML,1,Completeness,8,7
+NLP Pipelines and ML,1,Appropriateness,9,6
+NLP Pipelines and ML,1,Comprehensibility,5,8
+NLP Pipelines and ML,1,Correctness,9,6
+NLP Pipelines and ML,1,Compatibility,9,7
+NLP Pipelines and ML,1,Mind-to-program mapping,8,6
+NLP Pipelines and ML,1,Orthogonality,9,6
+NLP Pipelines and ML,2,Completeness,9,6
+NLP Pipelines and ML,2,Appropriateness,9,6
+NLP Pipelines and ML,2,Comprehensibility,5,8
+NLP Pipelines and ML,2,Correctness,9,6
+NLP Pipelines and ML,2,Compatibility,9,7
+NLP Pipelines and ML,2,Mind-to-program mapping,8,6
+NLP Pipelines and ML,2,Orthogonality,9,6
+NLP Pipelines and ML,3,Completeness,9,7
+NLP Pipelines and ML,3,Appropriateness,9,6
+NLP Pipelines and ML,3,Comprehensibility,5,8
+NLP Pipelines and ML,3,Correctness,9,6
+NLP Pipelines and ML,3,Compatibility,9,7
+NLP Pipelines and ML,3,Mind-to-program mapping,8,6
+NLP Pipelines and ML,3,Orthogonality,9,6
