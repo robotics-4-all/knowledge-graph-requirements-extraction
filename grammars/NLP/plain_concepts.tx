@@ -1,0 +1,998 @@
+Model:
+   imports*=Import
+   components*=Component
+   pipelines*=Pipeline
+;
+
+
+Import:
+   'import' name=ID ('from' source=STRING)?
+;
+
+
+// FR3: Reusable pipeline components
+Component:
+   'component' name=ID ('extends' parent=[Component])?'{'
+       properties*=Property
+       operations*=Operation
+   '}'
+;
+
+
+// FR1: Sequential processing pipelines
+Pipeline:
+   'pipeline' name=ID ('uses' components*=[Component][','])? '{'
+       input=InputSource
+       stages*=Stage
+       output=OutputConfig
+       batch_config?=BatchConfig
+       evaluation?=EvaluationConfig
+       testing?=TestingConfig
+   '}'
+;
+
+
+// FR2: Input data sources with configurable formats
+InputSource:
+   'input' '{'
+       source=DataSource
+       format=DataFormat
+       validation?=ValidationRules
+   '}'
+;
+
+
+DataSource:
+   FileSource | DatasetSource | StreamSource
+;
+
+
+FileSource:
+   'file' path=STRING ('encoding' encoding=STRING)?
+;
+
+
+DatasetSource:
+   'dataset' name=STRING ('version' version=STRING)?
+;
+
+
+StreamSource:
+   'stream' endpoint=STRING ('protocol' protocol=StreamProtocol)?
+;
+
+
+StreamProtocol:
+   'http' | 'websocket' | 'kafka' | 'mqtt'
+;
+
+
+DataFormat:
+   'format' type=FormatType ('delimiter' delimiter=STRING)?
+   ('headers' headers=BOOL)? ('schema' schema=SchemaDefinition)?
+;
+
+
+FormatType:
+   'text' | 'csv' | 'json' | 'xml' | 'parquet' | 'tsv'
+;
+
+
+SchemaDefinition:
+   '{' fields*=FieldDefinition[','] '}'
+;
+
+
+FieldDefinition:
+   name=ID ':' type=DataType ('required' required=BOOL)? ('default' default=STRING)?
+;
+
+
+DataType:
+   'string' | 'integer' | 'float' | 'boolean' | 'date' | 'text'
+;
+
+
+ValidationRules:
+   'validation' '{'
+       rules*=ValidationRule
+   '}'
+;
+
+
+ValidationRule:
+   RequiredFieldRule | DataTypeRule | RangeRule | PatternRule | CustomRule
+;
+
+
+RequiredFieldRule:
+   'require' fields*=ID[',']
+;
+
+
+DataTypeRule:
+   'validate_type' field=ID 'as' expected_type=DataType
+;
+
+
+RangeRule:
+   'validate_range' field=ID 'min' min_val=NUMBER 'max' max_val=NUMBER
+;
+
+
+PatternRule:
+   'validate_pattern' field=ID 'matches' pattern=STRING
+;
+
+
+CustomRule:
+   'custom_validation' name=ID ('params' params=ParameterList)?
+;
+
+
+// Pipeline stages for sequential processing
+Stage:
+   PreprocessingStage | FeatureExtractionStage | EncodingStage |
+   ModelStage | PredictionStage | MaskingStage
+;
+
+
+// FR4: Text preprocessing operations
+PreprocessingStage:
+   'preprocess' name=ID '{'
+       operations*=PreprocessingOperation
+   '}'
+;
+
+
+PreprocessingOperation:
+   CleaningOperation | NormalizationOperation | FormattingOperation
+;
+
+
+CleaningOperation:
+   'clean' '{'
+       ('remove_html' remove_html=BOOL)?
+       ('remove_urls' remove_urls=BOOL)?
+       ('remove_emails' remove_emails=BOOL)?
+       ('remove_special_chars' remove_special=BOOL)?
+       ('preserve_chars' preserve=STRING)?
+       ('custom_patterns' patterns*=STRING[','])?
+   '}'
+;
+
+
+NormalizationOperation:
+   'normalize' '{'
+       ('lowercase' lowercase=BOOL)?
+       ('remove_accents' remove_accents=BOOL)?
+       ('standardize_whitespace' standardize_ws=BOOL)?
+       ('expand_contractions' expand_contractions=BOOL)?
+       ('language' language=STRING)?
+   '}'
+;
+
+
+FormattingOperation:
+   'format' '{'
+       ('max_length' max_length=INT)?
+       ('padding' padding=PaddingConfig)?
+       ('truncation' truncation=TruncationConfig)?
+   '}'
+;
+
+
+PaddingConfig:
+   'pad_to' length=INT ('with' char=STRING)? ('side' side=PaddingSide)?
+;
+
+
+PaddingSide:
+   'left' | 'right' | 'both'
+;
+
+
+TruncationConfig:
+   'truncate_at' length=INT ('from' side=TruncationSide)?
+;
+
+
+TruncationSide:
+   'start' | 'end' | 'middle'
+;
+
+
+// FR5: Feature extraction configurations
+FeatureExtractionStage:
+   'extract_features' name=ID '{'
+       method=FeatureMethod
+       ('output_size' output_size=INT)?
+       ('preserve_order' preserve_order=BOOL)?
+   '}'
+;
+
+
+FeatureMethod:
+   BagOfWordsMethod | TfIdfMethod | WordEmbeddingMethod |
+   NgramMethod | CharacterMethod | StatisticalMethod
+;
+
+
+BagOfWordsMethod:
+   'bag_of_words' '{'
+       ('min_frequency' min_freq=INT)?
+       ('max_features' max_features=INT)?
+       ('binary' binary=BOOL)?
+   '}'
+;
+
+
+TfIdfMethod:
+   'tfidf' '{'
+       ('min_frequency' min_freq=INT)?
+       ('max_features' max_features=INT)?
+       ('sublinear' sublinear=BOOL)?
+   '}'
+;
+
+
+WordEmbeddingMethod:
+   'word_embedding' '{'
+       'model' model=EmbeddingModel
+       ('dimension' dimension=INT)?
+       ('aggregation' aggregation=AggregationMethod)?
+   '}'
+;
+
+
+EmbeddingModel:
+   'word2vec' | 'glove' | 'fasttext' | 'bert_base' | 'custom'
+;
+
+
+AggregationMethod:
+   'mean' | 'sum' | 'max' | 'concatenate'
+;
+
+
+NgramMethod:
+   'ngrams' '{'
+       'min_n' min_n=INT
+       'max_n' max_n=INT
+       ('character_level' char_level=BOOL)?
+   '}'
+;
+
+
+CharacterMethod:
+   'character_features' '{'
+       ('include_frequency' include_freq=BOOL)?
+       ('include_position' include_pos=BOOL)?
+       ('vocabulary' vocabulary=STRING)?
+   '}'
+;
+
+
+StatisticalMethod:
+   'statistical_features' '{'
+       features*=StatFeature[',']
+   '}'
+;
+
+
+StatFeature:
+   'length' | 'word_count' | 'sentence_count' | 'avg_word_length' |
+   'punctuation_ratio' | 'uppercase_ratio' | 'digit_ratio'
+;
+
+
+// FR6: Text encoding and decoding operations
+EncodingStage:
+   'encode' name=ID '{'
+       encoder=EncoderConfig
+       vocabulary?=VocabularyConfig
+       tokenization?=TokenizationConfig
+   '}'
+;
+
+
+EncoderConfig:
+   'encoder' type=EncoderType ('charset' charset=STRING)?
+;
+
+
+EncoderType:
+   'utf8' | 'ascii' | 'latin1' | 'unicode' | 'custom'
+;
+
+
+// FR10: Vocabulary and token management
+VocabularyConfig:
+   'vocabulary' '{'
+       ('size' max_size=INT)?
+       ('min_frequency' min_freq=INT)?
+       ('special_tokens' special_tokens*=SpecialToken[','])?
+       ('custom_words' custom_words*=STRING[','])?
+       ('unknown_token' unknown_token=STRING)?
+       ('handle_unknown' unknown_strategy=UnknownStrategy)?
+   '}'
+;
+
+
+SpecialToken:
+   'pad_token' | 'start_token' | 'end_token' | 'unknown_token' | 'mask_token'
+;
+
+
+UnknownStrategy:
+   'ignore' | 'replace' | 'error' | 'subword'
+;
+
+
+TokenizationConfig:
+   'tokenization' '{'
+       'method' method=TokenizationMethod
+       ('preserve_case' preserve_case=BOOL)?
+       ('split_punctuation' split_punct=BOOL)?
+       ('custom_rules' rules*=STRING[','])?
+   '}'
+;
+
+
+TokenizationMethod:
+   'whitespace' | 'wordpiece' | 'bpe' | 'sentence_piece' | 'custom'
+;
+
+
+// FR8: Model selection with user-friendly parameters
+ModelStage:
+   'model' name=ID '{'
+       type=ModelType
+       configuration=ModelConfiguration
+       training?=TrainingConfig
+   '}'
+;
+
+
+ModelType:
+   ClassificationModel | GenerationModel | SimilarityModel |
+   ClusteringModel | SummarizationModel
+;
+
+
+ClassificationModel:
+   'classification' '{'
+       'approach' approach=ClassificationApproach
+       ('categories' categories*=STRING[','])?
+       ('multi_label' multi_label=BOOL)?
+   '}'
+;
+
+
+ClassificationApproach:
+   'simple_rules' | 'pattern_matching' | 'statistical' | 'neural' | 'ensemble'
+;
+
+
+GenerationModel:
+   'generation' '{'
+       'style' style=GenerationStyle
+       ('max_length' max_length=INT)?
+       ('creativity' creativity=CreativityLevel)?
+   '}'
+;
+
+
+GenerationStyle:
+   'formal' | 'casual' | 'technical' | 'creative' | 'summary'
+;
+
+
+CreativityLevel:
+   'conservative' | 'balanced' | 'creative' | 'very_creative'
+;
+
+
+SimilarityModel:
+   'similarity' '{'
+       'method' method=SimilarityMethod
+       ('threshold' threshold=FLOAT)?
+   '}'
+;
+
+
+SimilarityMethod:
+   'exact_match' | 'fuzzy_match' | 'semantic' | 'syntactic'
+;
+
+
+ClusteringModel:
+   'clustering' '{'
+       ('num_clusters' num_clusters=INT)?
+       ('auto_clusters' auto_clusters=BOOL)?
+       ('similarity_measure' similarity=SimilarityMethod)?
+   '}'
+;
+
+
+SummarizationModel:
+   'summarization' '{'
+       'type' type=SummaryType
+       ('target_length' target_length=SummaryLength)?
+       ('focus' focus*=SummaryFocus[','])?
+   '}'
+;
+
+
+SummaryType:
+   'extractive' | 'abstractive' | 'keyword_based'
+;
+
+
+SummaryLength:
+   'very_short' | 'short' | 'medium' | 'long'
+;
+
+
+SummaryFocus:
+   'key_points' | 'main_ideas' | 'conclusions' | 'actions' | 'entities'
+;
+
+
+ModelConfiguration:
+   'configuration' '{'
+       ('quality_priority' quality=QualityPriority)?
+       ('speed_priority' speed=SpeedPriority)?
+       ('memory_usage' memory=MemoryUsage)?
+       ('interpretability' interpretability=InterpretabilityLevel)?
+   '}'
+;
+
+
+QualityPriority:
+   'highest' | 'high' | 'balanced' | 'fast'
+;
+
+
+SpeedPriority:
+   'realtime' | 'fast' | 'balanced' | 'quality_focused'
+;
+
+
+MemoryUsage:
+   'minimal' | 'low' | 'moderate' | 'high' | 'unlimited'
+;
+
+
+InterpretabilityLevel:
+   'full' | 'partial' | 'minimal' | 'none'
+;
+
+
+// FR9: Training configuration with business terms
+TrainingConfig:
+   'training' '{'
+       data_split=DataSplit
+       validation=ValidationConfig
+       stopping=StoppingConditions
+       ('optimization_goal' goal=OptimizationGoal)?
+   '}'
+;
+
+
+DataSplit:
+   'data_split' '{'
+       'training' training_ratio=FLOAT
+       'validation' validation_ratio=FLOAT
+       ('test' test_ratio=FLOAT)?
+       ('stratified' stratified=BOOL)?
+   '}'
+;
+
+
+ValidationConfig:
+   'validation' '{'
+       'method' method=ValidationMethod
+       ('frequency' frequency=ValidationFrequency)?
+       ('patience' patience=INT)?
+   '}'
+;
+
+
+ValidationMethod:
+   'holdout' | 'cross_validation' | 'time_series_split' | 'bootstrap'
+;
+
+
+ValidationFrequency:
+   'every_epoch' | 'every_n_steps' | 'percentage_complete'
+;
+
+
+StoppingConditions:
+   'stop_when' '{'
+       conditions*=StoppingCondition[',']
+   '}'
+;
+
+
+StoppingCondition:
+   AccuracyCondition | TimeCondition | IterationCondition |
+   ImprovementCondition | ResourceCondition
+;
+
+
+AccuracyCondition:
+   'accuracy_reaches' target=FLOAT
+;
+
+
+TimeCondition:
+   'time_exceeds' duration=INT 'minutes'
+;
+
+
+IterationCondition:
+   'iterations_exceed' max_iterations=INT
+;
+
+
+ImprovementCondition:
+   'no_improvement_for' patience=INT ('epochs' | 'steps')
+;
+
+
+ResourceCondition:
+   'memory_exceeds' memory_limit=INT ('MB' | 'GB')
+;
+
+
+// FR15: Loss and optimization criteria with descriptive goals
+OptimizationGoal:
+   'maximize' goal=OptimizationTarget |
+   'minimize' goal=OptimizationTarget |
+   'balance' goals*=OptimizationTarget[',']
+;
+
+
+OptimizationTarget:
+   'accuracy' | 'speed' | 'memory_efficiency' | 'interpretability' |
+   'robustness' | 'fairness' | 'consistency'
+;
+
+
+// FR7: Batch processing configurations
+BatchConfig:
+   'batch_processing' '{'
+       'size' batch_size=INT
+       ('memory_limit' memory_limit=MemoryLimit)?
+       ('parallel_workers' workers=INT)?
+       ('processing_mode' mode=ProcessingMode)?
+   '}'
+;
+
+
+MemoryLimit:
+   size=INT unit=MemoryUnit
+;
+
+
+MemoryUnit:
+   'MB' | 'GB' | 'auto'
+;
+
+
+ProcessingMode:
+   'sequential' | 'parallel' | 'distributed' | 'adaptive'
+;
+
+
+// FR12: Prediction and scoring configurations
+PredictionStage:
+   'predict' name=ID '{'
+       ('confidence_threshold' threshold=FLOAT)?
+       output_format=OutputFormat
+       ('result_filtering' filtering=ResultFiltering)?
+       ('scoring' scoring=ScoringConfig)?
+   '}'
+;
+
+
+OutputFormat:
+   'format' type=OutputType ('include_confidence' include_conf=BOOL)?
+;
+
+
+OutputType:
+   'labels_only' | 'probabilities' | 'ranked_list' | 'detailed_report'
+;
+
+
+ResultFiltering:
+   'filter' '{'
+       ('min_confidence' min_conf=FLOAT)?
+       ('max_results' max_results=INT)?
+       ('categories' allowed_categories*=STRING[','])?
+   '}'
+;
+
+
+ScoringConfig:
+   'scoring' '{'
+       ('include_uncertainty' uncertainty=BOOL)?
+       ('calibration' calibration=CalibrationMethod)?
+       ('explanation' explanation=ExplanationLevel)?
+   '}'
+;
+
+
+CalibrationMethod:
+   'none' | 'platt_scaling' | 'isotonic' | 'temperature_scaling'
+;
+
+
+ExplanationLevel:
+   'none' | 'basic' | 'detailed' | 'technical'
+;
+
+
+// FR13: Masking and sequence processing
+MaskingStage:
+   'masking' name=ID '{'
+       rules*=MaskingRule
+       sequence_handling=SequenceHandling
+   '}'
+;
+
+
+MaskingRule:
+   LengthMasking | ContentMasking | PositionMasking | ConditionalMasking
+;
+
+
+LengthMasking:
+   'mask_by_length' '{'
+       ('min_length' min_len=INT)?
+       ('max_length' max_len=INT)?
+       ('mask_token' mask_token=STRING)?
+   '}'
+;
+
+
+ContentMasking:
+   'mask_by_content' '{'
+       'patterns' patterns*=STRING[',']
+       ('replacement' replacement=STRING)?
+   '}'
+;
+
+
+PositionMasking:
+   'mask_by_position' '{'
+       'positions' positions*=PositionSpec[',']
+   '}'
+;
+
+
+PositionSpec:
+   'start' | 'end' | 'random' | position=INT
+;
+
+
+ConditionalMasking:
+   'mask_when' condition=MaskingCondition
+;
+
+
+MaskingCondition:
+   'contains' text=STRING |
+   'matches' pattern=STRING |
+   'length_greater_than' length=INT |
+   'length_less_than' length=INT
+;
+
+
+SequenceHandling:
+   'sequences' '{'
+       ('variable_length' variable_length=BOOL)?
+       ('padding_strategy' padding=PaddingStrategy)?
+       ('missing_data' missing_strategy=MissingDataStrategy)?
+   '}'
+;
+
+
+PaddingStrategy:
+   'none' | 'pre' | 'post' | 'dynamic'
+;
+
+
+MissingDataStrategy:
+   'skip' | 'interpolate' | 'mask' | 'default_value' | 'error'
+;
+
+
+// FR11: Evaluation metrics with automatic interpretation
+EvaluationConfig:
+   'evaluation' '{'
+       metrics*=EvaluationMetric[',']
+       ('reporting' reporting=ReportingConfig)?
+       ('interpretation' interpretation=InterpretationConfig)?
+   '}'
+;
+
+
+EvaluationMetric:
+   AccuracyMetric | PerformanceMetric | QualityMetric | BusinessMetric
+;
+
+
+AccuracyMetric:
+   'accuracy' | 'precision' | 'recall' | 'f1_score' | 'auc_roc'
+;
+
+
+PerformanceMetric:
+   'speed' | 'throughput' | 'latency' | 'memory_usage' | 'cpu_usage'
+;
+
+
+QualityMetric:
+   'consistency' | 'robustness' | 'fairness' | 'bias_detection'
+;
+
+
+BusinessMetric:
+   'user_satisfaction' | 'cost_effectiveness' | 'error_rate' | 'success_rate'
+;
+
+
+ReportingConfig:
+   'reporting' '{'
+       ('format' format=ReportFormat)?
+       ('detail_level' detail=ReportDetail)?
+       ('visualizations' viz*=VisualizationType[','])?
+   '}'
+;
+
+
+ReportFormat:
+   'summary' | 'detailed' | 'dashboard' | 'csv' | 'json'
+;
+
+
+ReportDetail:
+   'executive_summary' | 'business_insights' | 'technical_details' | 'full_report'
+;
+
+
+VisualizationType:
+   'charts' | 'tables' | 'graphs' | 'heatmaps' | 'confusion_matrix'
+;
+
+
+InterpretationConfig:
+   'interpretation' '{'
+       ('language' language=ReportLanguage)?
+       ('audience' audience=ReportAudience)?
+       ('recommendations' include_recommendations=BOOL)?
+   '}'
+;
+
+
+ReportLanguage:
+   'business' | 'technical' | 'mixed' | 'simple'
+;
+
+
+ReportAudience:
+   'executives' | 'analysts' | 'developers' | 'end_users'
+;
+
+
+// FR14: Testing and validation configurations
+TestingConfig:
+   'testing' '{'
+       quality_checks*=QualityCheck
+       error_handling=ErrorHandling
+       monitoring=PerformanceMonitoring
+   '}'
+;
+
+
+QualityCheck:
+   DataQualityCheck | ModelQualityCheck | OutputQualityCheck
+;
+
+
+DataQualityCheck:
+   'data_quality' '{'
+       ('completeness_threshold' completeness=FLOAT)?
+       ('consistency_checks' consistency=BOOL)?
+       ('outlier_detection' outliers=BOOL)?
+       ('duplicate_detection' duplicates=BOOL)?
+   '}'
+;
+
+
+ModelQualityCheck:
+   'model_quality' '{'
+       ('minimum_accuracy' min_accuracy=FLOAT)?
+       ('bias_detection' bias_check=BOOL)?
+       ('fairness_metrics' fairness=BOOL)?
+       ('robustness_testing' robustness=BOOL)?
+   '}'
+;
+
+
+OutputQualityCheck:
+   'output_quality' '{'
+       ('format_validation' format_check=BOOL)?
+       ('range_validation' range_check=BOOL)?
+       ('consistency_validation' consistency_check=BOOL)?
+   '}'
+;
+
+
+ErrorHandling:
+   'error_handling' '{'
+       ('strategy' strategy=ErrorStrategy)?
+       ('retry_attempts' retries=INT)?
+       ('fallback_model' fallback=STRING)?
+       ('logging_level' logging=LoggingLevel)?
+   '}'
+;
+
+
+ErrorStrategy:
+   'fail_fast' | 'continue_on_error' | 'fallback' | 'retry' | 'skip'
+;
+
+
+LoggingLevel:
+   'minimal' | 'standard' | 'detailed' | 'debug'
+;
+
+
+PerformanceMonitoring:
+   'monitoring' '{'
+       ('cpu_threshold' cpu_limit=FLOAT)?
+       ('memory_threshold' memory_limit=FLOAT)?
+       ('response_time_threshold' response_limit=FLOAT)?
+       ('error_rate_threshold' error_limit=FLOAT)?
+       ('alerting' alerting=AlertingConfig)?
+   '}'
+;
+
+
+AlertingConfig:
+   'alerts' '{'
+       ('email' email_alerts=BOOL)?
+       ('dashboard' dashboard_alerts=BOOL)?
+       ('webhook' webhook_url=STRING)?
+   '}'
+;
+
+
+// Output configuration
+OutputConfig:
+   'output' '{'
+       destination=OutputDestination
+       format=OutputFormat
+       ('post_processing' post_processing*=PostProcessingOperation[','])?
+   '}'
+;
+
+
+OutputDestination:
+   FileDestination | DatabaseDestination | APIDestination | StreamDestination
+;
+
+
+FileDestination:
+   'file' path=STRING ('format' format=STRING)?
+;
+
+
+DatabaseDestination:
+   'database' connection=STRING ('table' table=STRING)?
+;
+
+
+APIDestination:
+   'api' endpoint=STRING ('method' method=HTTPMethod)?
+;
+
+
+HTTPMethod:
+   'GET' | 'POST' | 'PUT' | 'DELETE'
+;
+
+
+StreamDestination:
+   'stream' endpoint=STRING ('protocol' protocol=StreamProtocol)?
+;
+
+
+PostProcessingOperation:
+   'sort' field=ID |
+   'filter' condition=STRING |
+   'transform' transformation=STRING |
+   'aggregate' aggregation=AggregationMethod
+;
+
+
+// Common property definition for components
+Property:
+   name=ID ':' value=PropertyValue
+;
+
+
+PropertyValue:
+   STRING | INT | FLOAT | BOOL | PropertyList
+;
+
+
+PropertyList:
+   '[' values*=PropertyValue[','] ']'
+;
+
+
+Operation:
+   name=ID ('(' params=ParameterList ')')? '{' body=OperationBody '}'
+;
+
+
+ParameterList:
+   params*=Parameter[',']
+;
+
+
+Parameter:
+   name=ID ':' type=DataType ('=' default=PropertyValue)?
+;
+
+
+OperationBody:
+   statements*=Statement
+;
+
+
+Statement:
+   Assignment | FunctionCall | ConditionalStatement
+;
+
+
+Assignment:
+   variable=ID '=' expression=Expression
+;
+
+
+FunctionCall:
+   function=ID '(' args*=Expression[','] ')'
+;
+
+
+ConditionalStatement:
+   'if' condition=Expression 'then' then_body=OperationBody ('else' else_body=OperationBody)?
+;
+
+
+Expression:
+   PropertyValue | VariableReference | FunctionCall
+;
+
+
+VariableReference:
+   name=ID
+;
+
+
+
+
+// Terminal definitions
+ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
+STRING: /".*?"|'.*?'/;
+INT: /[0-9]+/;
+NUMBER: /[0-9]+(\.[0-9]+)?/;
+FLOAT: /[0-9]*\.[0-9]+/;
+BOOL: 'true' | 'false';

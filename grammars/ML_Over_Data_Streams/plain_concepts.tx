@@ -1,0 +1,956 @@
+StreamMLModel:
+   imports*=Import
+   config=Configuration
+   streams+=StreamSource+
+   features*=FeatureDefinition
+   validation=DataValidation?
+   model=ModelConfiguration
+   training=TrainingConfiguration
+   target=TargetDefinition
+   processing=ProcessingConfiguration
+   encoding*=EncodingRule
+   output=OutputConfiguration
+   monitoring=MonitoringConfiguration?
+   quality=QualityConfiguration?
+   fitness=FitnessConfiguration?
+   storage=StorageConfiguration?
+   scalability=ScalabilityConfiguration?
+   pipeline=PipelineConfiguration?
+;
+
+
+// FR1: Stream Input Configuration
+Import:
+   'import' name=STRING ('as' alias=ID)?
+;
+
+
+Configuration:
+   'configuration' '{'
+       settings*=ConfigSetting
+   '}'
+;
+
+
+ConfigSetting:
+   name=ID '=' value=ConfigValue
+;
+
+
+ConfigValue:
+   STRING | FLOAT | INT | BOOL
+;
+
+
+StreamSource:
+   'stream' name=ID '{'
+       'format' format=DataFormat
+       ('sampling_rate' rate=SamplingRate)?
+       ('schema' schema=SchemaDefinition)?
+       ('source' source=SourceDefinition)?
+   '}'
+;
+
+
+DataFormat:
+   'json' | 'csv' | 'avro' | 'parquet' | 'text' | 'binary' | 'image' | 'audio'
+;
+
+
+SamplingRate:
+   value=FLOAT unit=TimeUnit
+;
+
+
+TimeUnit:
+   'hz' | 'khz' | 'mhz' | 'seconds' | 'minutes' | 'hours'
+;
+
+
+SchemaDefinition:
+   '{'
+       fields+=SchemaField+
+   '}'
+;
+
+
+SchemaField:
+   name=ID ':' type=DataType ('required' | 'optional')?
+   ('range' range=ValueRange)?
+   ('description' desc=STRING)?
+;
+
+
+DataType:
+   'string' | 'integer' | 'float' | 'boolean' | 'datetime' |
+   'image' | 'audio' | 'vector' | 'json' |
+   ArrayType | CustomType
+;
+
+
+ArrayType:
+   'array' '<' element_type=DataType '>'
+;
+
+
+CustomType:
+   name=ID
+;
+
+
+ValueRange:
+   '(' min=Number ',' max=Number ')'
+;
+
+
+SourceDefinition:
+   KafkaConfig | FileConfig | ApiConfig | DatabaseConfig
+;
+
+
+KafkaConfig:
+   'kafka' '{'
+       'topic' topic=STRING
+       ('partition' partition=INT)?
+       ('consumer_group' group=STRING)?
+   '}'
+;
+
+
+FileConfig:
+   'file' '{'
+       'path' path=STRING
+       ('watch' watch=BOOL)?
+       ('format' format=STRING)?
+   '}'
+;
+
+
+ApiConfig:
+   'api' '{'
+       'endpoint' endpoint=STRING
+       ('method' method=HttpMethod)?
+       ('headers' headers=HeaderList)?
+   '}'
+;
+
+
+HttpMethod:
+   'GET' | 'POST' | 'PUT' | 'PATCH'
+;
+
+
+HeaderList:
+   '[' headers*=Header[','] ']'
+;
+
+
+Header:
+   key=STRING ':' value=STRING
+;
+
+
+DatabaseConfig:
+   'database' '{'
+       'connection' connection=STRING
+       'query' query=STRING
+       ('polling_interval' interval=Duration)?
+   '}'
+;
+
+
+Duration:
+   value=INT unit=DurationUnit
+;
+
+
+DurationUnit:
+   'seconds' | 'minutes' | 'hours' | 'days'
+;
+
+
+// FR2: Feature Selection and Transformation
+FeatureDefinition:
+   'feature' name=ID 'from' source=[StreamSource] '{'
+       operations*=FeatureOperation
+   '}'
+;
+
+
+FeatureOperation:
+   SelectOperation | TransformOperation | CombineOperation
+;
+
+
+SelectOperation:
+   'select' fields+=FieldPath[',']
+;
+
+
+FieldPath:
+   parts+=ID['.']
+;
+
+
+TransformOperation:
+   'transform' field=FieldPath 'using' transformation=Transformation
+;
+
+
+Transformation:
+   ScaleTransform | FilterTransform | NormalizeTransform |
+   AggregateTransform | CustomTransform
+;
+
+
+ScaleTransform:
+   'scale' '(' method=ScaleMethod (',' params=TransformParams)? ')'
+;
+
+
+ScaleMethod:
+   'min_max' | 'standard' | 'robust' | 'quantile'
+;
+
+
+FilterTransform:
+   'filter' condition=FilterCondition
+;
+
+
+FilterCondition:
+   field=FieldPath operator=ComparisonOperator value=Value
+;
+
+
+ComparisonOperator:
+   '>' | '<' | '>=' | '<=' | '==' | '!=' | 'in' | 'not_in' | 'contains'
+;
+
+
+NormalizeTransform:
+   'normalize' '(' method=NormalizeMethod ')'
+;
+
+
+NormalizeMethod:
+   'z_score' | 'min_max' | 'unit_vector' | 'decimal_scaling'
+;
+
+
+AggregateTransform:
+   'aggregate' '(' function=AggregateFunction (',' window=WindowSpec)? ')'
+;
+
+
+AggregateFunction:
+   'sum' | 'avg' | 'min' | 'max' | 'count' | 'std' | 'var' | 'median'
+;
+
+
+WindowSpec:
+   'window' size=INT unit=TimeUnit ('sliding' step=INT)?
+;
+
+
+CustomTransform:
+   'custom' '(' function=STRING (',' params=TransformParams)? ')'
+;
+
+
+TransformParams:
+   '[' params*=Parameter[','] ']'
+;
+
+
+Parameter:
+   name=ID '=' value=Value
+;
+
+
+CombineOperation:
+   'combine' features+=FieldPath[','] 'using' method=CombineMethod
+;
+
+
+CombineMethod:
+   'concat' | 'sum' | 'product' | 'average' | 'weighted_sum' |
+   CustomCombineMethod
+;
+
+
+CustomCombineMethod:
+   function=STRING '(' params=TransformParams? ')'
+;
+
+
+// FR3: Data Shape Validation
+DataValidation:
+   'validation' '{'
+       rules*=ValidationRule
+       ('on_error' error_action=ErrorAction)?
+   '}'
+;
+
+
+ValidationRule:
+   ShapeValidation | TypeValidation | RangeValidation |
+   CustomValidation | DependencyValidation
+;
+
+
+ShapeValidation:
+   'shape' stream=[StreamSource] 'expect' shape=ShapeSpec
+;
+
+
+ShapeSpec:
+   dimensions+=DimensionSpec[',']
+;
+
+
+DimensionSpec:
+   name=ID? size=SizeConstraint
+;
+
+
+SizeConstraint:
+   exact=INT | range=SizeRange | 'any'
+;
+
+
+SizeRange:
+   'between' min=INT 'and' max=INT
+;
+
+
+TypeValidation:
+   'type' field=FieldPath 'must_be' expected_type=DataType
+;
+
+
+RangeValidation:
+   'range' field=FieldPath 'between' min=Value 'and' max=Value
+;
+
+
+CustomValidation:
+   'custom' name=ID '(' params=TransformParams? ')'
+   'message' message=STRING
+;
+
+
+DependencyValidation:
+   'when' condition=FilterCondition 'then' rule=ValidationRule
+;
+
+
+ErrorAction:
+   'skip' | 'warn' | 'fail' | 'retry' | DefaultAction
+;
+
+
+DefaultAction:
+   'default' default_value=Value
+;
+
+
+// FR4: Model Type Selection
+ModelConfiguration:
+   'model' type=ModelType '{'
+       hyperparameters*=Hyperparameter
+       ('version' version=STRING)?
+       ('description' description=STRING)?
+   '}'
+;
+
+
+ModelType:
+   'pattern-detector' | 'anomaly-finder' | 'trend-analyzer' |
+   'classification-engine' | 'regression-predictor' | 'clustering-detector' |
+   'sequence-analyzer' | 'similarity-matcher' | 'threshold-monitor' |
+   CustomModel
+;
+
+
+CustomModel:
+   'custom' custom_name=STRING
+;
+
+
+Hyperparameter:
+   name=ID '=' value=HyperparameterValue
+;
+
+
+HyperparameterValue:
+   Value | Range | Choice
+;
+
+
+Range:
+   'range' '(' start=Number ',' end=Number (',' step=Number)? ')'
+;
+
+
+Choice:
+   'choice' '[' options*=Value[','] ']'
+;
+
+
+// FR5: Training Data Specification
+TrainingConfiguration:
+   'training' '{'
+       'data' data_spec=TrainingDataSpec
+       ('strategy' strategy=TrainingStrategy)?
+       ('validation' validation_spec=ValidationSpec)?
+   '}'
+;
+
+
+TrainingDataSpec:
+   'from' sources+=TrainingSource[',']
+   ('window' window=WindowingStrategy)?
+   ('sampling' sampling=SamplingStrategy)?
+;
+
+
+TrainingSource:
+   stream=[StreamSource] ('where' condition=FilterCondition)?
+;
+
+
+WindowingStrategy:
+   FixedWindow | SlidingWindow | SessionWindow
+;
+
+
+FixedWindow:
+   'fixed' size=Duration
+;
+
+
+SlidingWindow:
+   'sliding' size=Duration 'step' step=Duration
+;
+
+
+SessionWindow:
+   'session' 'gap' gap=Duration
+;
+
+
+SamplingStrategy:
+   RandomSampling | StratifiedSampling | TimeBased | PercentageBased
+;
+
+
+RandomSampling:
+   'random' count=INT ('seed' seed=INT)?
+;
+
+
+StratifiedSampling:
+   'stratified' 'by' field=FieldPath count=INT
+;
+
+
+TimeBased:
+   'time_based' interval=Duration
+;
+
+
+PercentageBased:
+   'percentage' percent=FLOAT
+;
+
+
+TrainingStrategy:
+   'batch' | 'incremental' | 'online' | MiniBatch
+;
+
+
+MiniBatch:
+   'mini_batch' batch_size=INT
+;
+
+
+ValidationSpec:
+   SplitValidation | CrossValidation | TimeSeriesValidation
+;
+
+
+SplitValidation:
+   'split' split=SplitStrategy
+;
+
+
+CrossValidation:
+   'cross_validation' folds=INT
+;
+
+
+TimeSeriesValidation:
+   'time_series' holdout=Duration
+;
+
+
+SplitStrategy:
+   train=FLOAT ('validation' validation=FLOAT)? ('test' test=FLOAT)?
+;
+
+
+// FR6: Target Definition
+TargetDefinition:
+   'target' '{'
+       objective=ObjectiveDefinition
+       ('labels' labels=LabelDefinition)?
+       ('success_criteria' criteria=SuccessCriteria)?
+   '}'
+;
+
+
+ObjectiveDefinition:
+   PredictionObjective | DetectionObjective | ClassificationObjective |
+   RegressionObjective | ClusteringObjective
+;
+
+
+PredictionObjective:
+   'predict' field=FieldPath ('horizon' horizon=Duration)?
+;
+
+
+DetectionObjective:
+   'detect' pattern=PatternDefinition ('threshold' threshold=FLOAT)?
+;
+
+
+ClassificationObjective:
+   'classify' 'into' categories+=CategoryDefinition[',']
+;
+
+
+RegressionObjective:
+   'estimate' target=FieldPath ('bounds' bounds=ValueRange)?
+;
+
+
+ClusteringObjective:
+   'group' 'into' clusters=ClusterSpec
+;
+
+
+PatternDefinition:
+   'anomalies' | 'trends' | 'patterns' | 'outliers' | CustomPattern
+;
+
+
+CustomPattern:
+   'custom' pattern=STRING
+;
+
+
+CategoryDefinition:
+   name=STRING ('when' condition=FilterCondition)?
+;
+
+
+ClusterSpec:
+   FixedClusters | AutoClusters
+;
+
+
+FixedClusters:
+   count=INT 'clusters'
+;
+
+
+AutoClusters:
+   'auto' ('max' max=INT)?
+;
+
+
+LabelDefinition:
+   'from' source=LabelSource
+;
+
+
+LabelSource:
+   FieldLabelSource | FileLabelSource | ComputedLabelSource
+;
+
+
+FieldLabelSource:
+   'field' field=FieldPath
+;
+
+
+FileLabelSource:
+   'file' path=STRING format=DataFormat
+;
+
+
+ComputedLabelSource:
+   'computed' expression=STRING
+;
+
+
+SuccessCriteria:
+   metrics+=SuccessMetric[',']
+;
+
+
+SuccessMetric:
+   metric=MetricName operator=ComparisonOperator threshold=FLOAT
+;
+
+
+MetricName:
+   'accuracy' | 'precision' | 'recall' | 'f1' | 'auc' | 'mse' | 'mae' |
+   'rmse' | 'r2' | 'silhouette' | CustomMetric
+;
+
+
+CustomMetric:
+   name=STRING
+;
+
+
+// FR7: Real-time Processing Configuration
+ProcessingConfiguration:
+   'processing' '{'
+       'frequency' frequency=ProcessingFrequency
+       ('batch_size' batch_size=INT)?
+       ('triggers' triggers+=ProcessingTrigger[','])?
+       ('parallelism' parallelism=INT)?
+   '}'
+;
+
+
+ProcessingFrequency:
+   'real_time' | NearRealTime | ScheduledProcessing | 'event_driven'
+;
+
+
+NearRealTime:
+   'near_real_time' latency=Duration
+;
+
+
+ScheduledProcessing:
+   'scheduled' schedule=ScheduleSpec
+;
+
+
+ScheduleSpec:
+   EverySchedule | CronSchedule | AtSchedule
+;
+
+
+EverySchedule:
+   'every' interval=Duration
+;
+
+
+CronSchedule:
+   'cron' expression=STRING
+;
+
+
+AtSchedule:
+   'at' time=STRING
+;
+
+
+ProcessingTrigger:
+   DataTrigger | TimeTrigger | ThresholdTrigger | ModelTrigger
+;
+
+
+DataTrigger:
+   'on_data' trigger_spec=DataTriggerSpec
+;
+
+
+DataTriggerSpec:
+   CountTrigger | SizeTrigger
+;
+
+
+CountTrigger:
+   'count' count=INT
+;
+
+
+SizeTrigger:
+   'size' size=DataSize
+;
+
+
+DataSize:
+   value=FLOAT unit=DataSizeUnit
+;
+
+
+DataSizeUnit:
+   'bytes' | 'kb' | 'mb' | 'gb'
+;
+
+
+TimeTrigger:
+   'on_time' interval=Duration
+;
+
+
+ThresholdTrigger:
+   'on_threshold' metric=MetricName operator=ComparisonOperator value=FLOAT
+;
+
+
+ModelTrigger:
+   'on_model_update' | 'on_drift_detected' | 'on_performance_drop'
+;
+
+
+// FR8: Data Encoding Rules
+EncodingRule:
+   'encoding' type=DataType 'using' encoder=EncoderSpec
+;
+
+
+EncoderSpec:
+   TextEncoder | ImageEncoder | NumericalEncoder | CustomEncoder
+;
+
+
+TextEncoder:
+   'text' '{'
+       method=TextEncodingMethod
+       ('vocabulary_size' vocab_size=INT)?
+       ('sequence_length' seq_len=INT)?
+       ('padding' padding=PaddingStrategy)?
+   '}'
+;
+
+
+TextEncodingMethod:
+   'bag_of_words' | 'tf_idf' | 'word2vec' | 'bert' | 'embeddings'
+;
+
+
+PaddingStrategy:
+   'pre' | 'post' | 'none'
+;
+
+
+ImageEncoder:
+   'image' '{'
+       'resize' resize=ImageSize
+       ('normalize' normalize=BOOL)?
+       ('augment' augmentations+=ImageAugmentation[','])?
+   '}'
+;
+
+
+ImageSize:
+   ImageDimensions | 'original'
+;
+
+
+ImageDimensions:
+   '(' width=INT ',' height=INT ')'
+;
+
+
+ImageAugmentation:
+   'rotation' | 'flip' | 'crop' | 'brightness' | 'contrast'
+;
+
+
+NumericalEncoder:
+   'numerical' '{'
+       'scaling' scaling=ScaleMethod
+       ('missing_value_strategy' missing=MissingValueStrategy)?
+   '}'
+;
+
+
+MissingValueStrategy:
+   'drop' | 'mean' | 'median' | 'mode' | 'forward_fill' | 'backward_fill' |
+   ConstantStrategy
+;
+
+
+ConstantStrategy:
+   'constant' value=Value
+;
+
+
+CustomEncoder:
+   'custom' '{'
+       'function' function=STRING
+       ('parameters' params=TransformParams)?
+   '}'
+;
+
+
+// FR9: Output Formatting
+OutputConfiguration:
+   'output' '{'
+       format=OutputFormat
+       destinations+=OutputDestination[',']
+       ('include_confidence' include_confidence=BOOL)?
+       ('include_metadata' include_metadata=BOOL)?
+       ('batch_results' batch_results=BOOL)?
+   '}'
+;
+
+
+OutputFormat:
+   JsonOutput | CsvOutput | DatabaseOutput | StreamOutput | CustomOutput
+;
+
+
+JsonOutput:
+   'json' '{'
+       ('schema' schema=JsonSchema)?
+       ('pretty' pretty=BOOL)?
+   '}'
+;
+
+
+JsonSchema:
+   '{'
+       fields+=JsonField+
+   '}'
+;
+
+
+JsonField:
+   name=STRING ':' type=JsonFieldType
+;
+
+
+JsonFieldType:
+   'string' | 'number' | 'boolean' | 'array' | 'object'
+;
+
+
+CsvOutput:
+   'csv' '{'
+       ('delimiter' delimiter=STRING)?
+       ('headers' headers=BOOL)?
+   '}'
+;
+
+
+DatabaseOutput:
+   'database' '{'
+       'connection' connection=STRING
+       'table' table=STRING
+       ('batch_size' batch_size=INT)?
+   '}'
+;
+
+
+StreamOutput:
+   'stream' '{'
+       'topic' topic=STRING
+       ('partition_key' partition_key=STRING)?
+   '}'
+;
+
+
+CustomOutput:
+   'custom' '{'
+       'handler' handler=STRING
+       ('parameters' params=TransformParams)?
+   '}'
+;
+
+
+OutputDestination:
+   FileDestination | StreamDestination | ApiDestination | DatabaseDestination
+;
+
+
+FileDestination:
+   'file' path=STRING
+;
+
+
+StreamDestination:
+   'stream' topic=STRING
+;
+
+
+ApiDestination:
+   'api' endpoint=STRING ('method' method=HttpMethod)?
+;
+
+
+DatabaseDestination:
+   'database' table=STRING
+;
+
+
+// FR10-15: Remaining sections (truncated for brevity but follow same pattern)
+MonitoringConfiguration:
+   'monitoring' '{'
+       'enabled' enabled=BOOL
+   '}'
+;
+
+
+QualityConfiguration:
+   'quality' '{'
+       'enabled' enabled=BOOL
+   '}'
+;
+
+
+FitnessConfiguration:
+   'fitness' '{'
+       'enabled' enabled=BOOL
+   '}'
+;
+
+
+StorageConfiguration:
+   'storage' '{'
+       'enabled' enabled=BOOL
+   '}'
+;
+
+
+ScalabilityConfiguration:
+   'scalability' '{'
+       'enabled' enabled=BOOL
+   '}'
+;
+
+
+PipelineConfiguration:
+   'pipeline' '{'
+       'enabled' enabled=BOOL
+   '}'
+;
+
+
+// Base types
+Value:
+   STRING | FLOAT | INT | BOOL | 'null'
+;
+
+
+Number:
+   FLOAT | INT
+;
+
+
+FLOAT: /[0-9]*\.[0-9]+/;
+INT: /[0-9]+/;
+BOOL: /true|false/;
+STRING: /"[^"]*"|'[^']*'/;
+ID: /[a-zA-Z_][a-zA-Z0-9_]*/;

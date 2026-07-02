@@ -1,0 +1,894 @@
+DeepLearningDSL:
+   imports*=Import
+   model=Model
+;
+
+
+Import:
+   'import' name=STRING
+;
+
+
+Model:
+   'model' name=ID '{'
+       architecture=Architecture
+       input_spec=InputSpec
+       output_spec=OutputSpec
+       layers*=Layer
+       connections*=Connection
+       dataset=DatasetConfig
+       features=FeatureConfig?
+       preprocessing=PreprocessingConfig?
+       training=TrainingConfig
+       validation=ValidationConfig?
+       inference=InferenceConfig?
+   '}'
+;
+
+
+// FR1: Model Architecture Declaration
+Architecture:
+   'architecture' '{'
+       type=ArchitectureType
+       pattern=ArchitecturePattern?
+       components*=ArchitectureComponent
+   '}'
+;
+
+
+ArchitectureType:
+   'feedforward' | 'convolutional' | 'recurrent' | 'transformer' |
+   'autoencoder' | 'gan' | 'hybrid'
+;
+
+
+ArchitecturePattern:
+   'pattern' pattern_name=PatternName
+;
+
+
+PatternName:
+   'sequential' | 'residual' | 'skip_connection' |
+   'attention_based' | 'encoder_decoder' | 'custom'
+;
+
+
+ArchitectureComponent:
+   'component' name=ID '{'
+       type=ComponentType
+       properties*=Property
+   '}'
+;
+
+
+ComponentType:
+   'encoder' | 'decoder' | 'attention_block' | 'feature_extractor' |
+   'classifier' | 'generator' | 'discriminator'
+;
+
+
+// FR2: Layer Composition and Sequencing
+Layer:
+   'layer' name=ID '{'
+       type=LayerType
+       parameters*=LayerParameter
+       position=INT?
+   '}'
+;
+
+
+LayerType:
+   DenseLayer | ConvolutionalLayer | RecurrentLayer | AttentionLayer |
+   NormalizationLayer | ActivationLayer | PoolingLayer | DropoutLayer |
+   EmbeddingLayer | ReshapeLayer
+;
+
+
+DenseLayer:
+   'dense' '{'
+       units=INT
+       activation=ActivationFunction?
+       use_bias=BOOL?
+   '}'
+;
+
+
+// FR11: Convolutional Processing Patterns
+ConvolutionalLayer:
+   'conv' dimension=ConvDimension '{'
+       filters=INT
+       kernel_size=KernelSize
+       strides=Strides?
+       padding=PaddingType?
+       activation=ActivationFunction?
+       dilation_rate=DilationRate?
+   '}'
+;
+
+
+ConvDimension:
+   '1d' | '2d' | '3d'
+;
+
+
+KernelSize:
+   INT | '(' INT (',' INT)* ')'
+;
+
+
+Strides:
+   'strides' (INT | '(' INT (',' INT)* ')')
+;
+
+
+PaddingType:
+   'padding' PaddingValue
+;
+
+
+PaddingValue:
+   'valid' | 'same' | 'causal'
+;
+
+
+DilationRate:
+   'dilation_rate' (INT | '(' INT (',' INT)* ')')
+;
+
+
+RecurrentLayer:
+   'recurrent' rnn_type=RNNType '{'
+       units=INT
+       return_sequences=BOOL?
+       return_state=BOOL?
+       dropout=FLOAT?
+       recurrent_dropout=FLOAT?
+   '}'
+;
+
+
+RNNType:
+   'lstm' | 'gru' | 'rnn'
+;
+
+
+// FR10: Attention Mechanism Integration
+AttentionLayer:
+   'attention' attention_type=AttentionType '{'
+       attention_params=AttentionParams
+   '}'
+;
+
+
+AttentionType:
+   'self' | 'multi_head' | 'cross' | 'global'
+;
+
+
+AttentionParams:
+   MultiHeadAttention | SelfAttention | CrossAttention | GlobalAttention
+;
+
+
+MultiHeadAttention:
+   num_heads=INT
+   key_dim=INT
+   value_dim=INT?
+   dropout=FLOAT?
+   use_bias=BOOL?
+;
+
+
+SelfAttention:
+   use_scale=BOOL?
+   dropout=FLOAT?
+;
+
+
+CrossAttention:
+   use_scale=BOOL?
+   dropout=FLOAT?
+;
+
+
+GlobalAttention:
+   attention_type=GlobalAttentionType
+;
+
+
+GlobalAttentionType:
+   'additive' | 'multiplicative' | 'dot_product'
+;
+
+
+NormalizationLayer:
+   'normalization' norm_type=NormType '{'
+       axis=INT?
+       epsilon=FLOAT?
+       center=BOOL?
+       scale=BOOL?
+   '}'
+;
+
+
+NormType:
+   'batch' | 'layer' | 'group' | 'instance'
+;
+
+
+ActivationLayer:
+   'activation' '{'
+       function=ActivationFunction
+   '}'
+;
+
+
+PoolingLayer:
+   'pooling' pool_type=PoolType '{'
+       pool_size=PoolSize?
+       strides=Strides?
+       padding=PaddingType?
+   '}'
+;
+
+
+PoolType:
+   'max' | 'average' | 'global_max' | 'global_average'
+;
+
+
+PoolSize:
+   INT | '(' INT (',' INT)* ')'
+;
+
+
+DropoutLayer:
+   'dropout' '{'
+       rate=FLOAT
+       noise_shape=NoiseShape?
+       seed=INT?
+   '}'
+;
+
+
+NoiseShape:
+   'noise_shape' '(' NoiseShapeValue (',' NoiseShapeValue)* ')'
+;
+
+
+NoiseShapeValue:
+   INT | 'None'
+;
+
+
+EmbeddingLayer:
+   'embedding' '{'
+       input_dim=INT
+       output_dim=INT
+       mask_zero=BOOL?
+       input_length=INT?
+   '}'
+;
+
+
+ReshapeLayer:
+   'reshape' '{'
+       target_shape=Shape
+   '}'
+;
+
+
+ActivationFunction:
+   'relu' | 'sigmoid' | 'tanh' | 'softmax' | 'linear' | 'elu' |
+   'selu' | 'swish' | 'gelu' | 'leaky_relu'
+;
+
+
+LayerParameter:
+   Parameter
+;
+
+
+Connection:
+   'connect' from=ID 'to' to=ID ('with' connection_type=ConnectionType)?
+;
+
+
+ConnectionType:
+   'residual' | 'skip' | 'dense' | 'concat' | 'add' | 'multiply'
+;
+
+
+// FR3: Input and Output Specification
+InputSpec:
+   'input' '{'
+       shape=Shape
+       dtype=DataType
+       name=STRING?
+       preprocessing*=PreprocessingStep
+   '}'
+;
+
+
+OutputSpec:
+   'output' '{'
+       shape=Shape
+       dtype=DataType
+       activation=ActivationFunction?
+       name=STRING?
+   '}'
+;
+
+
+Shape:
+   '(' ShapeDimension (',' ShapeDimension)* ')'
+;
+
+
+ShapeDimension:
+   INT | 'None' | ID
+;
+
+
+DataType:
+   'float32' | 'float64' | 'int32' | 'int64' | 'bool' | 'string'
+;
+
+
+// FR4: Dataset Configuration and Loading
+DatasetConfig:
+   'dataset' '{'
+       source=DataSource
+       format=DataFormat
+       split=DataSplit?
+       cache=BOOL?
+       shuffle=BOOL?
+       prefetch=INT?
+   '}'
+;
+
+
+DataSource:
+   'source' source_type=SourceType
+;
+
+
+SourceType:
+   FileSource | DatabaseSource | APISource | GeneratedSource
+;
+
+
+FileSource:
+   'file' '{'
+       path=STRING
+       pattern=STRING?
+   '}'
+;
+
+
+DatabaseSource:
+   'database' '{'
+       connection=STRING
+       query=STRING?
+       table=STRING?
+   '}'
+;
+
+
+APISource:
+   'api' '{'
+       url=STRING
+       method=HTTPMethod?
+       headers*=Header
+       auth=AuthConfig?
+   '}'
+;
+
+
+GeneratedSource:
+   'generated' '{'
+       generator_type=GeneratorType
+       parameters*=Parameter
+   '}'
+;
+
+
+GeneratorType:
+   'synthetic' | 'random' | 'sequence' | 'image' | 'text'
+;
+
+
+HTTPMethod:
+   'GET' | 'POST' | 'PUT' | 'DELETE'
+;
+
+
+Header:
+   key=STRING ':' value=STRING
+;
+
+
+AuthConfig:
+   'auth' '{'
+       type=AuthType
+       credentials*=Parameter
+   '}'
+;
+
+
+AuthType:
+   'basic' | 'bearer' | 'api_key'
+;
+
+
+DataFormat:
+   'format' format_type=FormatType
+;
+
+
+FormatType:
+   'csv' | 'json' | 'parquet' | 'tfrecord' |
+   'image' | 'text' | 'hdf5' | 'numpy'
+;
+
+
+DataSplit:
+   'split' '{'
+       train=FLOAT
+       validation=FLOAT?
+       test=FLOAT?
+       strategy=SplitStrategy?
+   '}'
+;
+
+
+SplitStrategy:
+   'strategy' strategy_name=SplitStrategyName
+;
+
+
+SplitStrategyName:
+   'random' | 'stratified' | 'time_series' | 'group'
+;
+
+
+// FR5: Feature Selection and Transformation
+FeatureConfig:
+   'features' '{'
+       selection*=FeatureSelection
+       transformations*=FeatureTransformation
+       target=TargetDefinition?
+   '}'
+;
+
+
+FeatureSelection:
+   'select' features=FeatureList ('where' conditions*=FeatureCondition)?
+;
+
+
+FeatureList:
+   '[' feature_names+=STRING (',' feature_names+=STRING)* ']' |
+   feature_type=FeatureTypeKeyword
+;
+
+
+FeatureTypeKeyword:
+   'all' | 'numeric' | 'categorical' | 'text' | 'image'
+;
+
+
+FeatureCondition:
+   field=STRING operator=ComparisonOperator value=Value
+;
+
+
+ComparisonOperator:
+   '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in' | 'not_in'
+;
+
+
+FeatureTransformation:
+   'transform' feature=STRING 'using' transformation=TransformationType
+;
+
+
+TransformationType:
+   StandardScaler | MinMaxScaler | OneHotEncoder | LabelEncoder |
+   TextVectorizer | ImageProcessor | CustomTransform
+;
+
+
+StandardScaler:
+   'standard_scaler' '{'
+       with_mean=BOOL?
+       with_std=BOOL?
+   '}'
+;
+
+
+MinMaxScaler:
+   'minmax_scaler' '{'
+       feature_range=Range?
+   '}'
+;
+
+
+Range:
+   '(' FLOAT ',' FLOAT ')'
+;
+
+
+OneHotEncoder:
+   'onehot_encoder' '{'
+       drop=DropStrategy?
+       sparse=BOOL?
+       handle_unknown=UnknownStrategy?
+   '}'
+;
+
+
+DropStrategy:
+   'first' | 'if_binary' | 'None'
+;
+
+
+UnknownStrategy:
+   'error' | 'ignore'
+;
+
+
+LabelEncoder:
+   'label_encoder'
+;
+
+
+TextVectorizer:
+   'text_vectorizer' vectorizer_type=VectorizerType '{'
+       max_features=INT?
+       ngram_range=NgramRange?
+       min_df=MinDF?
+       max_df=MaxDF?
+   '}'
+;
+
+
+VectorizerType:
+   'tfidf' | 'count' | 'word2vec' | 'bert'
+;
+
+
+NgramRange:
+   '(' INT ',' INT ')'
+;
+
+
+MinDF:
+   INT | FLOAT
+;
+
+
+MaxDF:
+   INT | FLOAT
+;
+
+
+ImageProcessor:
+   'image_processor' '{'
+       resize=ImageSize?
+       normalize=BOOL?
+       augmentation*=ImageAugmentation
+   '}'
+;
+
+
+ImageSize:
+   '(' INT ',' INT ')'
+;
+
+
+ImageAugmentation:
+   'rotation' | 'flip' | 'zoom' | 'brightness' | 'contrast' | 'noise'
+;
+
+
+CustomTransform:
+   'custom' '{'
+       function=STRING
+       parameters*=Parameter
+   '}'
+;
+
+
+TargetDefinition:
+   'target' target_name=STRING ('as' target_type=TargetType)?
+;
+
+
+TargetType:
+   'binary' | 'multiclass' | 'regression' | 'multilabel'
+;
+
+
+// FR6: Data Normalization and Scaling
+PreprocessingConfig:
+   'preprocessing' '{'
+       normalization*=NormalizationStrategy
+       scaling*=ScalingStrategy
+       pipeline*=PreprocessingStep
+   '}'
+;
+
+
+NormalizationStrategy:
+   'normalize' features=FeatureList 'using' method=NormalizationMethod
+;
+
+
+NormalizationMethod:
+   'z_score' | 'min_max' | 'robust' | 'unit_vector' | 'max_abs'
+;
+
+
+ScalingStrategy:
+   'scale' features=FeatureList 'using' method=ScalingMethod
+;
+
+
+ScalingMethod:
+   'standard' | 'minmax' | 'robust' | 'quantile_uniform' | 'quantile_normal'
+;
+
+
+PreprocessingStep:
+   'step' name=ID '{'
+       operation=PreprocessingOperation
+       apply_to=FeatureList?
+       parameters*=Parameter
+   '}'
+;
+
+
+PreprocessingOperation:
+   'fill_missing' | 'remove_outliers' | 'encode_categorical' |
+   'extract_features' | 'reduce_dimensions' | 'balance_classes'
+;
+
+
+// FR7: Loss Function Selection & FR8: Batch Processing Configuration & FR9: Learning Parameters
+TrainingConfig:
+   'training' '{'
+       loss_function=LossFunction
+       optimizer=Optimizer
+       metrics*=Metric
+       batch_config=BatchConfig
+       learning_config=LearningConfig
+       callbacks*=Callback
+       epochs=INT
+   '}'
+;
+
+
+LossFunction:
+   'loss' loss_type=LossFunctionType ('with' loss_params*=Parameter)?
+;
+
+
+LossFunctionType:
+   'mse' | 'mae' | 'binary_crossentropy' | 'categorical_crossentropy' |
+   'sparse_categorical_crossentropy' | 'huber' | 'hinge' | 'focal' | 'custom'
+;
+
+
+Optimizer:
+   'optimizer' optimizer_type=OptimizerType '{'
+       learning_rate=LearningRate
+       parameters*=OptimizerParameter
+   '}'
+;
+
+
+OptimizerType:
+   'adam' | 'sgd' | 'rmsprop' | 'adagrad' | 'adadelta' | 'adamw'
+;
+
+
+LearningRate:
+   'learning_rate' lr_value=LearningRateValue
+;
+
+
+LearningRateValue:
+   FLOAT | LearningRateSchedule
+;
+
+
+LearningRateSchedule:
+   schedule_type=ScheduleType '{'
+       parameters*=Parameter
+   '}'
+;
+
+
+ScheduleType:
+   'exponential' | 'polynomial' | 'cosine' | 'step'
+;
+
+
+OptimizerParameter:
+   Parameter
+;
+
+
+Metric:
+   'metric' metric_name=MetricType
+;
+
+
+MetricType:
+   'accuracy' | 'precision' | 'recall' | 'f1_score' | 'auc' | 'mse' |
+   'mae' | 'top_k_accuracy' | 'custom'
+;
+
+
+BatchConfig:
+   'batch' '{'
+       size=INT
+       strategy=BatchStrategy?
+       drop_remainder=BOOL?
+   '}'
+;
+
+
+BatchStrategy:
+   'strategy' strategy_name=BatchStrategyName
+;
+
+
+BatchStrategyName:
+   'fixed' | 'dynamic' | 'gradient_accumulation'
+;
+
+
+LearningConfig:
+   'learning' '{'
+       patience=INT?
+       min_delta=FLOAT?
+       restore_best_weights=BOOL?
+       monitor=STRING?
+       mode=MonitorMode?
+   '}'
+;
+
+
+MonitorMode:
+   'min' | 'max' | 'auto'
+;
+
+
+Callback:
+   'callback' callback_type=CallbackType '{'
+       parameters*=Parameter
+   '}'
+;
+
+
+CallbackType:
+   'early_stopping' | 'model_checkpoint' | 'reduce_lr_on_plateau' |
+   'tensorboard' | 'csv_logger' | 'custom'
+;
+
+
+// FR13: Weight Initialization and Management
+Parameter:
+   name=ID '=' value=Value
+;
+
+
+Value:
+   FLOAT | INT | BOOL | STRING | InitializationStrategy
+;
+
+
+InitializationStrategy:
+   'random_normal' | 'random_uniform' | 'zeros' | 'ones' |
+   'glorot_normal' | 'glorot_uniform' | 'he_normal' | 'he_uniform' |
+   'lecun_normal' | 'lecun_uniform' | 'orthogonal' | 'identity'
+;
+
+
+// FR15: Model Validation and Performance Monitoring
+ValidationConfig:
+   'validation' '{'
+       strategy=ValidationStrategy
+       metrics*=ValidationMetric
+       cross_validation=CrossValidation?
+       holdout=HoldoutValidation?
+   '}'
+;
+
+
+ValidationStrategy:
+   'strategy' strategy_type=ValidationStrategyType
+;
+
+
+ValidationStrategyType:
+   'holdout' | 'cross_validation' | 'time_series' | 'bootstrap'
+;
+
+
+ValidationMetric:
+   'metric' metric_name=MetricType ('with' threshold=FLOAT)?
+;
+
+
+CrossValidation:
+   'cross_validation' '{'
+       folds=INT
+       shuffle=BOOL?
+       random_state=INT?
+       stratify=BOOL?
+   '}'
+;
+
+
+HoldoutValidation:
+   'holdout' '{'
+       test_size=FLOAT
+       random_state=INT?
+       stratify=BOOL?
+   '}'
+;
+
+
+// FR14: Prediction and Inference Configuration
+InferenceConfig:
+   'inference' '{'
+       batch_size=INT?
+       output_format=OutputFormat
+       confidence=ConfidenceConfig?
+       postprocessing*=PostprocessingStep
+   '}'
+;
+
+
+OutputFormat:
+   'output_format' format_type=OutputFormatType
+;
+
+
+OutputFormatType:
+   'probabilities' | 'classes' | 'raw' | 'top_k'
+;
+
+
+ConfidenceConfig:
+   'confidence' '{'
+       method=ConfidenceMethod
+       threshold=FLOAT?
+   '}'
+;
+
+
+ConfidenceMethod:
+   'softmax' | 'sigmoid' | 'entropy' | 'monte_carlo_dropout' | 'ensemble'
+;
+
+
+PostprocessingStep:
+   'postprocess' name=ID '{'
+       operation=PostprocessingOperation
+       parameters*=Parameter
+   '}'
+;
+
+
+PostprocessingOperation:
+   'threshold' | 'top_k' | 'nms' | 'decode' | 'format' | 'aggregate'
+;
+
+
+Property:
+   Parameter
+;
